@@ -232,46 +232,6 @@ nav{
 }
 .notify.show{transform:translateX(-50%) translateY(0);}
 
-
-/* WIZARD / DIAGNÓSTICO GUIADO */
-.wizard-progress{
-  height:6px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-bottom:18px;
-}
-.wizard-progress-fill{
-  height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width .25s ease;
-}
-.wizard-step-label{
-  font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;
-}
-.wizard-help{
-  color:var(--muted);font-size:13px;line-height:1.45;margin-top:-10px;margin-bottom:18px;
-}
-.wizard-options{
-  display:flex;flex-direction:column;gap:8px;margin-top:14px;
-}
-.wizard-option{
-  background:var(--surface2);border:0.5px solid var(--border2);border-radius:12px;
-  padding:13px 14px;color:var(--text);cursor:pointer;transition:all .2s;font-size:14px;
-}
-.wizard-option:hover,.wizard-option.selected{
-  border-color:var(--accent);background:rgba(124,106,255,.14);
-}
-.wizard-input{
-  width:100%;background:var(--surface2);border:0.5px solid var(--border2);
-  border-radius:12px;padding:13px 14px;color:var(--text);
-  font-family:'DM Sans',sans-serif;font-size:15px;outline:none;
-}
-.wizard-textarea{
-  width:100%;min-height:120px;resize:vertical;background:var(--surface2);border:0.5px solid var(--border2);
-  border-radius:12px;padding:13px 14px;color:var(--text);
-  font-family:'DM Sans',sans-serif;font-size:15px;outline:none;line-height:1.45;
-}
-.wizard-input:focus,.wizard-textarea:focus{border-color:var(--accent);}
-.wizard-summary{
-  background:var(--surface2);border:0.5px solid var(--border2);border-radius:12px;padding:14px;
-  color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap;
-}
-
 /* EMPTY STATE */
 .empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:14px;}
 .empty-icon{font-size:36px;margin-bottom:12px;}
@@ -295,22 +255,45 @@ nav{
   <div class="ai-sub">Isso leva alguns segundos</div>
 </div>
 
-<!-- MODAL OBJETIVO / DIAGNÓSTICO GUIADO -->
+<!-- MODAL OBJETIVO -->
 <div class="modal-bg" id="modal-obj">
   <div class="modal">
-    <div class="wizard-progress">
-      <div class="wizard-progress-fill" id="wizard-progress-fill"></div>
+    <div class="modal-title" id="modal-obj-title">Novo objetivo</div>
+    <div class="field">
+      <label>Objetivo</label>
+      <input type="text" id="obj-input-title" placeholder="Ex: Atingir 95kg e 15% de gordura">
     </div>
-
-    <div class="wizard-step-label" id="wizard-step-label">Etapa 1</div>
-    <div class="modal-title" id="wizard-question">O que você quer conquistar?</div>
-    <div class="wizard-help" id="wizard-help">Digite um objetivo grande, claro e mensurável.</div>
-
-    <div id="wizard-input-area"></div>
-
+    <div class="field">
+      <label>Situação atual</label>
+      <textarea id="obj-input-situacao" placeholder="Descreva onde você está hoje. Seja honesto — isso define a qualidade do plano."></textarea>
+    </div>
+    <div class="field">
+      <label>Prazo</label>
+      <input type="date" id="obj-input-prazo">
+    </div>
+    <div class="field">
+      <label>Pilar</label>
+      <select id="obj-input-pilar">
+        <option value="fisico">Físico</option>
+        <option value="financeiro">Financeiro</option>
+        <option value="intelecto">Intelecto</option>
+        <option value="autoridade">Autoridade</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Cor</label>
+      <div class="color-row" id="color-row">
+        <div class="color-swatch sel" style="background:#7c6aff" data-color="#7c6aff" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ff6a3d" data-color="#ff6a3d" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#3dffaa" data-color="#3dffaa" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ffd166" data-color="#ffd166" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#6ab4ff" data-color="#6ab4ff" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ff6ab4" data-color="#ff6ab4" onclick="selColor(this)"></div>
+      </div>
+    </div>
     <div class="modal-btns">
-      <button class="btn-modal-cancel" id="wizard-back-btn" onclick="wizardBack()">Voltar</button>
-      <button class="btn-modal-ok" id="wizard-next-btn" onclick="wizardNext()">Próximo →</button>
+      <button class="btn-modal-cancel" onclick="closeModal('modal-obj')">Cancelar</button>
+      <button class="btn-modal-ok" onclick="saveObjective()">Gerar plano com IA →</button>
     </div>
   </div>
 </div>
@@ -409,7 +392,7 @@ nav{
 <div class="page" id="page-objectives">
   <div class="missions-header">
     <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Objetivos</div>
-    <button class="btn-add" onclick="openObjectiveWizard()">+ Novo</button>
+    <button class="btn-add" onclick="openModal('modal-obj')">+ Novo</button>
   </div>
   <div class="obj-full-list" id="obj-full-list">
     <div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda. Adicione o primeiro!</div>
@@ -417,21 +400,18 @@ nav{
 </div>
 
 <script>
-// ── STATE ──────────────────────────────────────────────
+// ── CONSTANTES E CONFIGURAÇÃO ──────────────────────────────────────
 const STORAGE_KEY = 'lifeos_v2';
-
-// Cole sua chave do Google AI Studio aqui só para teste.
-// IMPORTANTE: como este app está no GitHub Pages público, esta chave fica visível no código.
-// Para produção, depois vamos proteger isso com backend/serverless.
 const GEMINI_API_KEY = 'AIzaSyDHD17qHckzAZq869WhKggHK3NwLdz3bJQ';
 
+// ── CARREGAMENTO E INICIALIZAÇÃO DO STATE ──────────────────────────
 function loadState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return null;
     return JSON.parse(saved);
   } catch (e) {
-    console.error('Erro ao carregar dados salvos:', e);
+    console.error('Erro ao carregar dados:', e);
     localStorage.removeItem(STORAGE_KEY);
     return null;
   }
@@ -464,83 +444,101 @@ const LEVELS = [
   {min:50000,max:Infinity,name:'Lendário'}
 ];
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
 
-// ── STREAK ─────────────────────────────────────────────
+// ── STREAK - CORRIGIDO ─────────────────────────────────────────────
 function checkStreak() {
   const today = new Date().toDateString();
-  if (state.lastActiveDay !== today) {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate()-1);
-    if (state.lastActiveDay === yesterday.toDateString()) {
-      state.streak++;
-    } else if (state.lastActiveDay !== today) {
-      state.streak = state.streak > 0 && state.lastActiveDay ? 0 : state.streak;
-    }
+  
+  if (state.lastActiveDay === today) return;
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (state.lastActiveDay === yesterday.toDateString()) {
+    state.streak++;
+  } else if (state.lastActiveDay !== null) {
+    state.streak = 0;
   }
 }
 
-// ── NAV ────────────────────────────────────────────────
+// ── NAVEGAÇÃO ──────────────────────────────────────────────────────
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  
   const tabs = document.querySelectorAll('.nav-tab');
-  const idx = {dash:0,missions:1,objectives:2}[id];
-  tabs[idx].classList.add('active');
+  const idx = {dash:0, missions:1, objectives:2}[id];
+  if (tabs[idx]) tabs[idx].classList.add('active');
+  
   render();
 }
 
-// ── GREETING ───────────────────────────────────────────
+// ── SAUDAÇÃO ────────────────────────────────────────────────────────
 function greeting() {
   const h = new Date().getHours();
-  return h<12 ? 'Bom dia,' : h<18 ? 'Boa tarde,' : 'Boa noite,';
+  return h < 12 ? 'Bom dia,' : h < 18 ? 'Boa tarde,' : 'Boa noite,';
 }
 
-// ── LEVEL ──────────────────────────────────────────────
+// ── NÍVEL ──────────────────────────────────────────────────────────
 function getLevel(xp) {
-  for (let i=LEVELS.length-1;i>=0;i--) {
-    if (xp >= LEVELS[i].min) return {...LEVELS[i], index:i+1, pct: Math.min(100, Math.round((xp-LEVELS[i].min)/(LEVELS[i].max-LEVELS[i].min+1)*100))};
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (xp >= LEVELS[i].min) {
+      const range = LEVELS[i].max - LEVELS[i].min + 1;
+      const pct = Math.min(100, Math.round(((xp - LEVELS[i].min) / range) * 100));
+      return {...LEVELS[i], index: i + 1, pct};
+    }
   }
-  return {...LEVELS[0], index:1, pct:0};
+  return {...LEVELS[0], index: 1, pct: 0};
 }
 
-// ── PILLAR XP ──────────────────────────────────────────
+// ── XP POR PILAR ───────────────────────────────────────────────────
 function getPillarXP(pilar) {
-  return state.missions.filter(m => m.pilar===pilar && m.done).reduce((s,m)=>s+m.xp,0);
+  return state.missions
+    .filter(m => m.pilar === pilar && m.done)
+    .reduce((sum, m) => sum + m.xp, 0);
 }
 
-// ── DAYS LEFT ──────────────────────────────────────────
+// ── DIAS RESTANTES ────────────────────────────────────────────────
 function daysLeft(prazo) {
   if (!prazo) return null;
   const diff = new Date(prazo) - new Date();
-  return Math.max(0, Math.ceil(diff/86400000));
+  return Math.max(0, Math.ceil(diff / 86400000));
 }
 
-// ── TODAY MISSIONS ─────────────────────────────────────
+// ── MISSÕES DE HOJE ────────────────────────────────────────────────
 function todayMissions() {
   const today = new Date().toDateString();
   return state.missions.filter(m => m.date === today);
 }
 
-// ── RENDER DASHBOARD ───────────────────────────────────
+// ── RENDERIZAR DASHBOARD ──────────────────────────────────────────
 function renderDash() {
   document.getElementById('dash-greeting').textContent = greeting();
   const lv = getLevel(state.totalXP);
+  
   document.getElementById('total-xp-display').textContent = state.totalXP.toLocaleString() + ' XP';
   document.getElementById('level-name-display').textContent = 'Nível ' + lv.index + ' · ' + lv.name;
   document.getElementById('dash-tagline').textContent = 'Nível ' + lv.index + ' · ' + lv.name;
   document.getElementById('global-xp-bar').style.width = lv.pct + '%';
-  document.getElementById('xp-next-label').textContent = state.totalXP.toLocaleString() + ' / ' + (lv.max+1).toLocaleString() + ' XP para o próximo nível';
+  document.getElementById('xp-next-label').textContent = 
+    state.totalXP.toLocaleString() + ' / ' + (lv.max + 1).toLocaleString() + ' XP para o próximo nível';
   document.getElementById('streak-val').textContent = state.streak;
 
-  // Pillars
+  // Pilares
   const pillarsWithData = Object.entries(PILLAR_META).map(([key, meta]) => {
     const xp = getPillarXP(key);
     const lv = getLevel(xp);
     return {key, ...meta, xp, lv};
   });
-  document.getElementById('pillar-grid').innerHTML = pillarsWithData.map(p => `
+  
+  const pillarGrid = document.getElementById('pillar-grid');
+  pillarGrid.innerHTML = pillarsWithData.map(p => `
     <div class="pillar-card" style="--pc:${p.color}22" onclick="showPage('missions')">
       <div class="pc-top">
         <span class="pc-icon">${p.icon}</span>
@@ -552,45 +550,55 @@ function renderDash() {
     </div>
   `).join('');
 
-  // Active objectives
-  const objs = state.objectives.filter(o=>!o.done);
+  // Objetivos ativos
+  const objs = state.objectives.filter(o => !o.done);
   const el = document.getElementById('dash-obj-list');
+  
   if (!objs.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda.</div>';
   } else {
-    el.innerHTML = objs.slice(0,3).map(o => {
+    el.innerHTML = objs.slice(0, 3).map(o => {
       const dl = daysLeft(o.prazo);
+      const safeTitle = escapeHtml(o.title);
+      const pillarName = PILLAR_META[o.pilar]?.name || o.pilar;
+      
       return `<div class="obj-card">
         <div class="obj-dot" style="background:${o.color}"></div>
         <div class="obj-info">
-          <div class="obj-title">${o.title}</div>
-          <div class="obj-meta">${PILLAR_META[o.pilar]?.name||o.pilar}</div>
+          <div class="obj-title" title="${safeTitle}">${safeTitle}</div>
+          <div class="obj-meta">${pillarName}</div>
         </div>
-        ${dl!==null ? `<div class="obj-days">${dl}d restantes</div>` : ''}
+        ${dl !== null ? `<div class="obj-days">${dl}d restantes</div>` : ''}
       </div>`;
     }).join('');
   }
 }
 
-// ── RENDER MISSIONS ────────────────────────────────────
+// ── RENDERIZAR MISSÕES ─────────────────────────────────────────────
 function renderMissions() {
   const today = new Date();
-  document.getElementById('missions-date').textContent = today.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('missions-date').textContent = today.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
 
   const ms = todayMissions();
-  const doneXP = ms.filter(m=>m.done).reduce((s,m)=>s+m.xp,0);
-  const totalAvail = ms.reduce((s,m)=>s+m.xp,0);
-  const pct = totalAvail>0 ? Math.round(doneXP/totalAvail*100) : 0;
+  const doneXP = ms.filter(m => m.done).reduce((sum, m) => sum + m.xp, 0);
+  const totalAvail = ms.reduce((sum, m) => sum + m.xp, 0);
+  const pct = totalAvail > 0 ? Math.round((doneXP / totalAvail) * 100) : 0;
+  
   document.getElementById('day-xp-val').textContent = doneXP + ' XP';
-  document.getElementById('day-xp-fill').style.width = pct+'%';
+  document.getElementById('day-xp-fill').style.width = pct + '%';
 
   const container = document.getElementById('missions-container');
+  
   if (!ms.length) {
     container.innerHTML = '<div class="empty"><div class="empty-icon">⚔️</div>Nenhuma missão para hoje. Adicione um objetivo!</div>';
     return;
   }
 
-  // Group by pilar
+  // Agrupar por pilar
   const grouped = {};
   ms.forEach(m => {
     if (!grouped[m.pilar]) grouped[m.pilar] = [];
@@ -598,43 +606,56 @@ function renderMissions() {
   });
 
   container.innerHTML = Object.entries(grouped).map(([pilar, missions]) => {
-    const meta = PILLAR_META[pilar] || {name:pilar, color:'#7c6aff', icon:'⚡'};
+    const meta = PILLAR_META[pilar] || {name: pilar, color: '#7c6aff', icon: '⚡'};
+    
     return `<div class="mission-group">
       <div class="mg-label">
         <div class="mg-dot" style="background:${meta.color}"></div>
         ${meta.icon} ${meta.name}
       </div>
-      ${missions.map(m => `
-        <div class="mission-item ${m.done?'done':''}" onclick="toggleMission('${m.id}')">
-          <div class="mi-check">${m.done?'✓':''}</div>
+      ${missions.map(m => {
+        const safeText = escapeHtml(m.text);
+        const safeObjective = escapeHtml(m.objective || '');
+        
+        return `
+        <div class="mission-item ${m.done ? 'done' : ''}" onclick="toggleMission('${m.id}')">
+          <div class="mi-check">${m.done ? '✓' : ''}</div>
           <div class="mi-body">
-            <div class="mi-text">${m.text}</div>
-            <div class="mi-meta">${m.objective||''}</div>
+            <div class="mi-text">${safeText}</div>
+            <div class="mi-meta">${safeObjective}</div>
           </div>
           <div class="mi-xp">+${m.xp} XP</div>
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>`;
   }).join('');
 }
 
-// ── RENDER OBJECTIVES ──────────────────────────────────
+// ── RENDERIZAR OBJETIVOS ───────────────────────────────────────────
 function renderObjectives() {
   const el = document.getElementById('obj-full-list');
+  
   if (!state.objectives.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda. Adicione o primeiro!</div>';
     return;
   }
+  
   el.innerHTML = state.objectives.map(o => {
     const dl = daysLeft(o.prazo);
-    const todayMs = state.missions.filter(m=>m.objectiveId===o.id);
-    const done = todayMs.filter(m=>m.done).length;
+    const todayMs = state.missions.filter(m => m.objectiveId === o.id);
+    const done = todayMs.filter(m => m.done).length;
     const total = todayMs.length;
-    const pct = total>0 ? Math.round(done/total*100) : 0;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    
+    const safeTitle = escapeHtml(o.title);
+    const pillarName = PILLAR_META[o.pilar]?.name || o.pilar;
+    const dateStr = o.prazo ? new Date(o.prazo + 'T12:00').toLocaleDateString('pt-BR') : 'sem prazo';
+    
     return `<div class="obj-full-card">
       <div class="ofc-top">
         <div class="ofc-dot" style="background:${o.color}"></div>
-        <div class="ofc-title">${o.title}</div>
+        <div class="ofc-title">${safeTitle}</div>
         <button class="ofc-edit" onclick="deleteObj('${o.id}')" title="Remover">×</button>
       </div>
       <div class="ofc-prog-label">
@@ -643,232 +664,86 @@ function renderObjectives() {
       </div>
       <div class="ofc-bar-bg"><div class="ofc-bar-fill" style="width:${pct}%;background:${o.color}"></div></div>
       <div class="ofc-meta">
-        <span class="ofc-tag">📂 ${PILLAR_META[o.pilar]?.name||o.pilar}</span>
-        ${dl!==null?`<span class="ofc-tag">⏳ ${dl} dias restantes</span>`:''}
-        <span class="ofc-tag">📅 ${o.prazo ? new Date(o.prazo+'T12:00').toLocaleDateString('pt-BR') : 'sem prazo'}</span>
+        <span class="ofc-tag">📂 ${pillarName}</span>
+        ${dl !== null ? `<span class="ofc-tag">⏳ ${dl} dias restantes</span>` : ''}
+        <span class="ofc-tag">📅 ${dateStr}</span>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── TOGGLE MISSION ─────────────────────────────────────
+// ── ALTERNAR MISSÃO ────────────────────────────────────────────────
 function toggleMission(id) {
-  const m = state.missions.find(m=>m.id===id);
+  const m = state.missions.find(m => m.id === id);
   if (!m) return;
+  
   m.done = !m.done;
   const delta = m.done ? m.xp : -m.xp;
   state.totalXP = Math.max(0, state.totalXP + delta);
+  
   if (m.done) {
     state.lastActiveDay = new Date().toDateString();
     showNotify('+' + m.xp + ' XP!');
   }
+  
   save();
   render();
 }
 
-// ── DELETE OBJ ─────────────────────────────────────────
+// ── DELETAR OBJETIVO ───────────────────────────────────────────────
 function deleteObj(id) {
-  state.objectives = state.objectives.filter(o=>o.id!==id);
-  state.missions = state.missions.filter(m=>m.objectiveId!==id);
-  save(); render();
+  state.objectives = state.objectives.filter(o => o.id !== id);
+  state.missions = state.missions.filter(m => m.objectiveId !== id);
+  save();
+  render();
 }
 
-// ── MODAL ──────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+// ── MODAL ──────────────────────────────────────────────────────────
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add('open');
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('open');
+}
+
 function selColor(el) {
-  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('sel'));
   el.classList.add('sel');
   state.selectedColor = el.dataset.color;
 }
 
-// ── GEMINI + DIAGNÓSTICO GUIADO ─────────────────────────
-let wizardStep = 0;
-let objectiveDraft = {};
-let diagnosticAnswers = {};
-
-const WIZARD_BASE_STEPS = [
-  {
-    key: 'title',
-    label: 'Etapa 1',
-    question: 'O que você quer conquistar?',
-    help: 'Escreva o objetivo como se fosse uma missão grande. Ex: Atingir 95kg e 15% de gordura.',
-    type: 'text',
-    placeholder: 'Ex: Juntar meu primeiro milhão em 1 ano'
-  },
-  {
-    key: 'pilar',
-    label: 'Etapa 2',
-    question: 'Qual área da sua vida esse objetivo vai evoluir?',
-    help: 'Escolha o pilar principal. Isso muda completamente o diagnóstico.',
-    type: 'options',
-    options: [
-      { value: 'fisico', text: '🏋️ Físico' },
-      { value: 'financeiro', text: '💰 Financeiro' },
-      { value: 'intelecto', text: '🧠 Intelecto' },
-      { value: 'autoridade', text: '⚡ Autoridade' }
-    ]
-  }
-];
-
-const DIAGNOSTIC_STEPS = {
-  fisico: [
-    { key:'peso', question:'Qual é seu peso atual e percentual de gordura, se souber?', help:'Ex: 90kg, 33% de gordura.', type:'text', placeholder:'Peso, gordura, cintura...' },
-    { key:'rotina', question:'Como está sua rotina física hoje?', help:'Sedentário, caminha, treina, quantos dias por semana?', type:'textarea', placeholder:'Descreva sua rotina real hoje.' },
-    { key:'sono_alimentacao', question:'Como estão sono e alimentação?', help:'Isso ajuda o plano a começar sem exagero.', type:'textarea', placeholder:'Horário de sono, água, proteína, refeições...' }
-  ],
-  financeiro: [
-    { key:'trabalho', question:'Hoje você trabalha ou está buscando renda?', help:'CLT, autônomo, informal, desempregado, estágio, negócio próprio...', type:'text', placeholder:'Ex: CLT, recebo salário mensal...' },
-    { key:'renda', question:'Quanto entra líquido por mês ou por semana?', help:'Pode ser aproximado. O app precisa saber o tamanho do jogo.', type:'text', placeholder:'Ex: R$ 2.500/mês líquido' },
-    { key:'dividas', question:'Você tem dívidas? Quais?', help:'Inclua valor, parcelas, juros, atraso, Serasa ou ativa.', type:'textarea', placeholder:'Ex: cartão R$..., empréstimo R$..., Serasa sim/não...' },
-    { key:'gastos', question:'Quais são seus gastos fixos e quanto sobra?', help:'Aluguel, comida, transporte, filho, contas, parcelas.', type:'textarea', placeholder:'Ex: aluguel, água/luz, comida, transporte...' }
-  ],
-  intelecto: [
-    { key:'nivel', question:'Qual é seu nível atual nesse objetivo?', help:'Ex: inglês B1/B2, programação zero, design iniciante...', type:'text', placeholder:'Seu ponto de partida.' },
-    { key:'tempo', question:'Quanto tempo real você consegue estudar por dia?', help:'Melhor 20 minutos reais do que 3 horas imaginárias.', type:'text', placeholder:'Ex: 30 min por dia, 5x na semana' },
-    { key:'dificuldade', question:'Qual é sua maior dificuldade hoje?', help:'Falta de vocabulário, constância, foco, método, base...', type:'textarea', placeholder:'O que trava sua evolução?' }
-  ],
-  autoridade: [
-    { key:'nicho', question:'Sobre o que você quer construir autoridade?', help:'Pode estar indefinido. Responda com hipóteses.', type:'textarea', placeholder:'Ex: tecnologia, finanças, evolução pessoal, indústria...' },
-    { key:'presenca', question:'Como está sua presença digital hoje?', help:'Redes, frequência, medo de postar, tipo de conteúdo.', type:'textarea', placeholder:'Ex: posto pouco, não tenho nicho, tenho vergonha...' },
-    { key:'referencias', question:'Quem são suas referências e por quê?', help:'Isso ajuda o app a entender o estilo que você busca.', type:'textarea', placeholder:'Ex: Akita, Raul Sena, Gabriel Saab...' }
-  ]
-};
-
-const FINAL_STEP = {
-  key: 'prazo',
-  label: 'Etapa final',
-  question: 'Qual é o prazo desejado?',
-  help: 'Escolha uma data. Se não souber, deixe em branco e o app começa pela fase de base.',
-  type: 'date'
-};
-
-function getWizardSteps() {
-  const pilar = objectiveDraft.pilar;
-  return [
-    ...WIZARD_BASE_STEPS,
-    ...(pilar ? DIAGNOSTIC_STEPS[pilar] : []),
-    FINAL_STEP
-  ];
+// ── VALIDAÇÃO E SANITIZAÇÃO ───────────────────────────────────────
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
-function openObjectiveWizard() {
-  wizardStep = 0;
-  objectiveDraft = {};
-  diagnosticAnswers = {};
-  renderWizard();
-  openModal('modal-obj');
-}
-
-function renderWizard() {
-  const steps = getWizardSteps();
-  const step = steps[Math.min(wizardStep, steps.length - 1)];
-  const progress = Math.round(((wizardStep + 1) / steps.length) * 100);
-
-  document.getElementById('wizard-progress-fill').style.width = progress + '%';
-  document.getElementById('wizard-step-label').textContent = step.label || `Etapa ${wizardStep + 1}`;
-  document.getElementById('wizard-question').textContent = step.question;
-  document.getElementById('wizard-help').textContent = step.help || '';
-
-  const area = document.getElementById('wizard-input-area');
-  const currentValue = objectiveDraft[step.key] || diagnosticAnswers[step.key] || '';
-
-  if (step.type === 'options') {
-    area.innerHTML = `<div class="wizard-options">
-      ${step.options.map(opt => `
-        <div class="wizard-option ${currentValue === opt.value ? 'selected' : ''}" onclick="selectWizardOption('${step.key}','${opt.value}')">${opt.text}</div>
-      `).join('')}
-    </div>`;
-  } else if (step.type === 'textarea') {
-    area.innerHTML = `<textarea class="wizard-textarea" id="wizard-current-input" placeholder="${step.placeholder || ''}">${currentValue}</textarea>`;
-  } else {
-    area.innerHTML = `<input class="wizard-input" id="wizard-current-input" type="${step.type}" placeholder="${step.placeholder || ''}" value="${currentValue}">`;
-  }
-
-  document.getElementById('wizard-back-btn').style.visibility = wizardStep === 0 ? 'hidden' : 'visible';
-  document.getElementById('wizard-next-btn').textContent = wizardStep === steps.length - 1 ? 'Gerar plano →' : 'Próximo →';
-}
-
-function selectWizardOption(key, value) {
-  objectiveDraft[key] = value;
-  if (key === 'pilar') {
-    diagnosticAnswers = {};
-  }
-  wizardNext();
-}
-
-function saveCurrentWizardAnswer() {
-  const steps = getWizardSteps();
-  const step = steps[wizardStep];
-  if (!step || step.type === 'options') return true;
-
-  const input = document.getElementById('wizard-current-input');
-  const value = input ? input.value.trim() : '';
-
-  if (step.key === 'title' && !value) {
-    showNotify('Digite seu objetivo primeiro.');
+function validateObjectiveInput(title, situacao) {
+  if (!title || title.trim().length === 0) {
+    showNotify('Digite um objetivo válido.');
     return false;
   }
-
-  if (step.key === 'title' || step.key === 'prazo') {
-    objectiveDraft[step.key] = value;
-  } else {
-    diagnosticAnswers[step.key] = value;
+  
+  if (title.length > 200) {
+    showNotify('Objetivo muito longo (máx 200 caracteres).');
+    return false;
   }
-
+  
   return true;
 }
 
-function wizardBack() {
-  saveCurrentWizardAnswer();
-  if (wizardStep > 0) wizardStep--;
-  renderWizard();
-}
-
-async function wizardNext() {
-  if (!saveCurrentWizardAnswer()) return;
-
-  const steps = getWizardSteps();
-
-  if (wizardStep < steps.length - 1) {
-    wizardStep++;
-    renderWizard();
-    return;
+// ── GEMINI API - GERAR MISSÕES ─────────────────────────────────────
+async function askGeminiForMissions(obj) {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('COLE_SUA')) {
+    console.warn('Chave Gemini não configurada, usando fallback.');
+    return null;
   }
 
-  await saveObjectiveFromWizard();
-}
-
-function buildSituationText() {
-  const pilar = objectiveDraft.pilar;
-  const labels = {
-    peso:'Peso/gordura',
-    rotina:'Rotina física',
-    sono_alimentacao:'Sono/alimentação',
-    trabalho:'Trabalho',
-    renda:'Renda',
-    dividas:'Dívidas',
-    gastos:'Gastos',
-    nivel:'Nível atual',
-    tempo:'Tempo disponível',
-    dificuldade:'Dificuldade',
-    nicho:'Nicho',
-    presenca:'Presença digital',
-    referencias:'Referências'
-  };
-
-  return Object.entries(diagnosticAnswers)
-    .filter(([,v]) => v && String(v).trim())
-    .map(([k,v]) => `${labels[k] || k}: ${v}`)
-    .join('
-') || `Diagnóstico inicial do pilar ${pilar}.`;
-}
-
-async function askGeminiForMissions(obj) {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'COLE_SUA_CHAVE_AQUI') return null;
-
-  const prompt = `
-Você é o motor estratégico do app Life OS, uma interface de evolução pessoal gamificada.
+  const prompt = `Você é o motor estratégico do app Life OS, uma interface de evolução pessoal gamificada.
 Você NÃO cria lista de tarefas genéricas. Você cria missões que movem métricas reais.
 
 Objetivo: ${obj.title}
@@ -877,7 +752,7 @@ Prazo: ${obj.prazo || 'sem prazo'}
 Diagnóstico:
 ${obj.situacao}
 
-Responda APENAS em JSON válido, sem markdown:
+Responda APENAS em JSON válido, sem markdown, sem backticks:
 [
   {"texto":"missão prática, específica e realizável hoje","xp":30},
   {"texto":"missão prática, específica e realizável hoje","xp":40},
@@ -889,8 +764,7 @@ Regras:
 - Nada genérico tipo "pesquisar sobre".
 - Cada missão deve ser executável em 1 dia.
 - XP entre 20 e 80.
-- Se faltarem dados, a primeira missão deve ser levantar uma métrica importante.
-`;
+- Se faltarem dados, a primeira missão deve ser levantar uma métrica importante.`;
 
   try {
     const response = await fetch(
@@ -904,19 +778,42 @@ Regras:
       }
     );
 
+    if (!response.ok) {
+      console.error('Erro Gemini:', response.status);
+      return null;
+    }
+
     const data = await response.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    if (!data.candidates || !data.candidates[0]) {
+      console.error('Resposta Gemini inválida:', data);
+      return null;
+    }
+
+    const raw = data.candidates[0].content?.parts?.[0]?.text || '';
     const clean = raw.replace(/```json|```/g, '').trim();
+    
     const missions = JSON.parse(clean);
 
-    if (!Array.isArray(missions)) return null;
-    return missions.filter(m => m.texto && m.xp).slice(0, 3);
+    if (!Array.isArray(missions)) {
+      console.error('Missões não é array:', missions);
+      return null;
+    }
+
+    return missions
+      .filter(m => m.texto && m.xp && typeof m.xp === 'number')
+      .map(m => ({
+        texto: escapeHtml(m.texto),
+        xp: Math.min(Math.max(m.xp, 20), 80)
+      }))
+      .slice(0, 3);
   } catch (e) {
-    console.error('Erro Gemini, usando motor local:', e);
+    console.error('Erro ao chamar Gemini:', e);
     return null;
   }
 }
 
+// ── MISSÕES PADRÃO (FALLBACK) ──────────────────────────────────────
 function generateStrategicMissions(obj) {
   const pilar = obj.pilar;
   const dl = daysLeft(obj.prazo);
@@ -929,7 +826,7 @@ function generateStrategicMissions(obj) {
     ],
     financeiro: [
       { texto: 'Anotar sua renda líquida mensal ou semanal atual', xp: 30 },
-      { texto: 'Listar todas as dívidas: valor, parcelas, juros e se está ativa ou no Serasa', xp: 45 },
+      { texto: 'Listar todas as dívidas: valor, parcelas, juros', xp: 45 },
       { texto: 'Calcular quanto sobra ou falta no mês depois dos gastos fixos', xp: 40 }
     ],
     intelecto: [
@@ -967,21 +864,22 @@ function generateStrategicMissions(obj) {
   return missions;
 }
 
-async function saveObjectiveFromWizard() {
-  const title = objectiveDraft.title;
-  const prazo = objectiveDraft.prazo || '';
-  const pilar = objectiveDraft.pilar || 'fisico';
-  const situacao = buildSituationText();
+// ── SALVAR OBJETIVO COM GEMINI ─────────────────────────────────────
+async function saveObjective() {
+  const title = document.getElementById('obj-input-title').value.trim();
+  const situacao = document.getElementById('obj-input-situacao').value.trim();
+  const prazo = document.getElementById('obj-input-prazo').value;
+  const pilar = document.getElementById('obj-input-pilar').value;
 
-  if (!title) return;
+  if (!validateObjectiveInput(title, situacao)) return;
 
   document.getElementById('ai-loading').classList.add('open');
 
   const id = 'obj_' + Date.now();
   const obj = {
     id,
-    title,
-    situacao,
+    title: escapeHtml(title),
+    situacao: escapeHtml(situacao),
     prazo,
     pilar,
     color: state.selectedColor,
@@ -991,7 +889,9 @@ async function saveObjectiveFromWizard() {
   state.objectives.push(obj);
 
   let missions = await askGeminiForMissions(obj);
-  if (!missions) missions = generateStrategicMissions(obj);
+  if (!missions) {
+    missions = generateStrategicMissions(obj);
+  }
 
   const today = new Date().toDateString();
 
@@ -999,10 +899,10 @@ async function saveObjectiveFromWizard() {
     state.missions.push({
       id: 'm_' + Date.now() + '_' + i,
       text: m.texto,
-      xp: Number(m.xp) || 30,
+      xp: m.xp,
       pilar,
       objectiveId: id,
-      objective: title,
+      objective: obj.title,
       done: false,
       date: today
     });
@@ -1010,49 +910,64 @@ async function saveObjectiveFromWizard() {
 
   save();
   document.getElementById('ai-loading').classList.remove('open');
-  closeModal('modal-obj');
-  showNotify(missions ? 'Plano gerado!' : 'Plano local gerado!');
+  showNotify('Missões geradas! 🚀');
   render();
+  closeModal('modal-obj');
   showPage('missions');
+
+  // Resetar form
+  document.getElementById('obj-input-title').value = '';
+  document.getElementById('obj-input-situacao').value = '';
+  document.getElementById('obj-input-prazo').value = '';
 }
 
-// Mantém compatibilidade caso algum botão antigo chame saveObjective()
-async function saveObjective() {
-  await saveObjectiveFromWizard();
-}
-
-// ── SAVE MANUAL MISSION ────────────────────────────────
+// ── SALVAR MISSÃO MANUAL ───────────────────────────────────────────
 function saveMission() {
   const text = document.getElementById('mm-title').value.trim();
   const pilar = document.getElementById('mm-pilar').value;
-  const xp = parseInt(document.getElementById('mm-xp').value)||30;
-  if (!text) return;
+  const xp = parseInt(document.getElementById('mm-xp').value) || 30;
+
+  if (!text) {
+    showNotify('Digite a missão.');
+    return;
+  }
+
   state.missions.push({
-    id:'m_'+Date.now(),text,xp,pilar,objectiveId:null,objective:'Manual',done:false,date:new Date().toDateString()
+    id: 'm_' + Date.now(),
+    text: escapeHtml(text),
+    xp: Math.min(Math.max(xp, 10), 200),
+    pilar,
+    objectiveId: null,
+    objective: 'Manual',
+    done: false,
+    date: new Date().toDateString()
   });
-  save(); closeModal('modal-mission');
-  showNotify('Missão adicionada!');
+
+  save();
+  closeModal('modal-mission');
+  showNotify('Missão adicionada! ⚔️');
   render();
-  document.getElementById('mm-title').value='';
+  document.getElementById('mm-title').value = '';
 }
 
-// ── NOTIFY ─────────────────────────────────────────────
+// ── NOTIFICAÇÃO ────────────────────────────────────────────────────
 function showNotify(msg) {
   const el = document.getElementById('notify');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2200);
+  setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// ── RENDER ─────────────────────────────────────────────
+// ── RENDERIZAR TUDO ────────────────────────────────────────────────
 function render() {
   renderDash();
   renderMissions();
   renderObjectives();
 }
 
-// ── INIT ───────────────────────────────────────────────
+// ── INICIALIZAR ────────────────────────────────────────────────────
 checkStreak();
+save();
 render();
 </script>
 </body>

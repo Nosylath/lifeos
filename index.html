@@ -646,97 +646,260 @@ function selColor(el) {
   state.selectedColor = el.dataset.color;
 }
 
-// ── SAVE OBJECTIVE → AI ────────────────────────────────
-async function saveObjective() {
-  const title = document.getElementById('obj-input-title').value.trim();
-  const situacao = document.getElementById('obj-input-situacao').value.trim();
-  const prazo = document.getElementById('obj-input-prazo').value;
-  const pilar = document.getElementById('obj-input-pilar').value;
-  if (!title) return;
+// ── GEMINI + MOTOR DE MISSÕES ─────────────────────────
+// IMPORTANTE:
+// Para testar, cole sua chave aqui.
+// Para publicar de verdade, o ideal é proteger essa chave com backend/serverless.
+const GEMINI_API_KEY = "";
 
-  const id = 'obj_' + Date.now();
-  const obj = { id, title, situacao, prazo, pilar, color: state.selectedColor, done:false };
-  state.objectives.push(obj);
-  save();
-  closeModal('modal-obj');
+function clampXP(value) {
+  const n = Number(value) || 30;
+  return Math.min(Math.max(n, 20), 100);
+}
 
-  // Calculate days for context
-  const dl = daysLeft(prazo);
-  const prazoCtx = prazo ? `Prazo: ${dl} dias (até ${new Date(prazo+'T12:00').toLocaleDateString('pt-BR')}).` : 'Sem prazo definido.';
+function cleanGeminiJson(text) {
+  if (!text) return null;
 
-  document.getElementById('ai-loading').classList.add('open');
+  let clean = text
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
 
-  try {
-    const prompt = `Você é um coach de alta performance e sistema de gamificação RPG pessoal.
+  const firstBracket = clean.indexOf("[");
+  const lastBracket = clean.lastIndexOf("]");
 
-Objetivo do usuário: "${title}"
-Situação atual: "${situacao || 'não informada'}"
-Pilar: ${pilar}
-${prazoCtx}
-
-Crie 3 missões diárias realistas e específicas para este objetivo.
-${prazo && dl < 30 ? 'Como o prazo é curto, as missões devem ser mais intensas e focadas.' : ''}
-${prazo && dl > 180 ? 'Como o prazo é longo, as missões devem construir hábitos sustentáveis.' : ''}
-
-Responda APENAS em JSON válido, sem texto antes ou depois:
-[
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 50},
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 40},
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 30}
-]
-
-Regras:
-- Missões realizáveis em 1 dia
-- XP entre 20 e 100 baseado na dificuldade
-- Específicas para a situação atual descrita
-- Em português brasileiro
-- Progressivas (a primeira mais fácil)`;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:500,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content.map(i=>i.text||'').join('');
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const missions = JSON.parse(clean);
-    const today = new Date().toDateString();
-    missions.forEach((m,i) => {
-      state.missions.push({
-        id: 'm_'+Date.now()+'_'+i,
-        text: m.texto,
-        xp: m.xp,
-        pilar,
-        objectiveId: id,
-        objective: title,
-        done: false,
-        date: today
-      });
-    });
-  } catch(e) {
-    // fallback missions
-    const today = new Date().toDateString();
-    [{texto:`Dedicar 30 minutos ao objetivo: ${title}`,xp:50},{texto:'Pesquisar e anotar 3 aprendizados sobre o tema',xp:30},{texto:'Registrar sua situação atual com detalhes',xp:20}].forEach((m,i)=>{
-      state.missions.push({id:'m_'+Date.now()+'_'+i,text:m.texto,xp:m.xp,pilar,objectiveId:id,objective:title,done:false,date:today});
-    });
+  if (firstBracket !== -1 && lastBracket !== -1) {
+    clean = clean.slice(firstBracket, lastBracket + 1);
   }
 
-  save();
-  document.getElementById('ai-loading').classList.remove('open');
-  showNotify('Missões geradas!');
-  render();
-  showPage('missions');
-
-  // Reset form
-  document.getElementById('obj-input-title').value='';
-  document.getElementById('obj-input-situacao').value='';
-  document.getElementById('obj-input-prazo').value='';
+  try {
+    return JSON.parse(clean);
+  } catch (error) {
+    console.error("Erro ao converter resposta da IA em JSON:", error, clean);
+    return null;
+  }
 }
+
+async function askGemini(prompt) {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("COLE")) {
+    throw new Error("Chave Gemini não configurada.");
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 800
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Erro Gemini:", data);
+    throw new Error(data.error?.message || "Erro ao chamar Gemini.");
+  }
+
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
+
+function fallbackMissions(title, situacao, pilar) {
+  const lowerTitle = (title || "").toLowerCase();
+  const lowerSituacao = (situacao || "").toLowerCase();
+
+  if (pilar === "fisico") {
+    return [
+      { texto: "Registrar peso atual, medida da cintura e nível de energia de hoje", xp: 25 },
+      { texto: "Caminhar 15 minutos em ritmo leve, sem buscar performance", xp: 30 },
+      { texto: "Registrar tudo que comer hoje, sem tentar corrigir ainda", xp: 25 }
+    ];
+  }
+
+  if (pilar === "financeiro") {
+    return [
+      { texto: "Anotar renda líquida mensal, gastos fixos e quanto sobra no mês", xp: 35 },
+      { texto: "Listar todas as dívidas: valor, parcelas, juros e situação atual", xp: 45 },
+      { texto: "Identificar uma habilidade ou serviço que pode gerar renda extra", xp: 35 }
+    ];
+  }
+
+  if (pilar === "intelecto") {
+    return [
+      { texto: "Estudar 25 minutos com foco total no objetivo escolhido", xp: 30 },
+      { texto: "Criar 5 anotações ou cards sobre o que estudou hoje", xp: 25 },
+      { texto: "Fazer uma revisão curta do conteúdo aprendido ontem", xp: 20 }
+    ];
+  }
+
+  if (pilar === "autoridade") {
+    return [
+      { texto: "Anotar 3 ideias de conteúdo ligadas à sua evolução real", xp: 25 },
+      { texto: "Escrever um rascunho curto de post, vídeo ou thread", xp: 35 },
+      { texto: "Estudar 20 minutos uma referência do nicho que você admira", xp: 25 }
+    ];
+  }
+
+  return [
+    { texto: `Dedicar 20 minutos ao objetivo: ${title}`, xp: 25 },
+    { texto: "Registrar o progresso de hoje", xp: 20 },
+    { texto: "Definir a próxima pequena ação para amanhã", xp: 20 }
+  ];
+}
+
+async function generateMissions(title, situacao, prazo, pilar) {
+  const dl = daysLeft(prazo);
+  const prazoCtx = prazo
+    ? `Prazo: ${dl} dias, até ${new Date(prazo + "T12:00").toLocaleDateString("pt-BR")}.`
+    : "Sem prazo definido.";
+
+  const prompt = `
+Você é o motor estratégico do app Life OS.
+
+O Life OS NÃO é uma lista de tarefas.
+Ele transforma objetivos grandes em evolução mensurável, hábitos e missões diárias.
+
+Objetivo do usuário:
+${title}
+
+Pilar:
+${pilar}
+
+Situação atual:
+${situacao || "não informada"}
+
+${prazoCtx}
+
+Gere 3 missões para HOJE.
+
+As missões precisam ser:
+- práticas
+- específicas
+- realizáveis em 1 dia
+- conectadas ao objetivo
+- úteis para construir hábito ou medir progresso
+- escritas em português brasileiro
+- sem parecer "comprar pão" ou tarefa aleatória
+
+Se o pilar for financeiro, considere diagnóstico: renda, gastos, dívidas, Serasa, parcelas, patrimônio, habilidade monetizável.
+Se o pilar for físico, considere: peso, gordura, sedentarismo, treino, sono, alimentação e medição.
+Se o pilar for intelecto, considere: estudo, revisão, prática e consistência.
+Se o pilar for autoridade, considere: conteúdo, nicho, presença digital e construção de repertório.
+
+Responda APENAS em JSON válido, exatamente neste formato:
+[
+  {"texto": "missão específica", "xp": 30},
+  {"texto": "missão específica", "xp": 40},
+  {"texto": "missão específica", "xp": 50}
+]
+
+Regras de XP:
+- mínimo 20
+- máximo 100
+- quanto mais difícil, mais XP
+`;
+
+  try {
+    const raw = await askGemini(prompt);
+    const parsed = cleanGeminiJson(raw);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error("Resposta da IA veio vazia ou inválida.");
+    }
+
+    return parsed.slice(0, 3).map(m => ({
+      texto: String(m.texto || m.text || "Missão sem descrição").trim(),
+      xp: clampXP(m.xp)
+    }));
+  } catch (error) {
+    console.warn("Gemini falhou. Usando fallback local:", error);
+    return fallbackMissions(title, situacao, pilar);
+  }
+}
+
+function validateObjectiveInput(title) {
+  if (!title || !title.trim()) {
+    showNotify("Digite um objetivo.");
+    return false;
+  }
+
+  if (title.length > 200) {
+    showNotify("Objetivo muito longo.");
+    return false;
+  }
+
+  return true;
+}
+
+// ── SAVE OBJECTIVE → GEMINI ────────────────────────────
+async function saveObjective() {
+  const title = document.getElementById("obj-input-title").value.trim();
+  const situacao = document.getElementById("obj-input-situacao").value.trim();
+  const prazo = document.getElementById("obj-input-prazo").value;
+  const pilar = document.getElementById("obj-input-pilar").value;
+
+  if (!validateObjectiveInput(title)) return;
+
+  const id = "obj_" + Date.now();
+  const obj = {
+    id,
+    title,
+    situacao,
+    prazo,
+    pilar,
+    color: state.selectedColor,
+    done: false
+  };
+
+  state.objectives.push(obj);
+  save();
+  closeModal("modal-obj");
+
+  document.getElementById("ai-loading").classList.add("open");
+
+  const missions = await generateMissions(title, situacao, prazo, pilar);
+  const today = new Date().toDateString();
+
+  missions.forEach((m, i) => {
+    state.missions.push({
+      id: "m_" + Date.now() + "_" + i,
+      text: m.texto,
+      xp: clampXP(m.xp),
+      pilar,
+      objectiveId: id,
+      objective: title,
+      done: false,
+      date: today
+    });
+  });
+
+  save();
+
+  document.getElementById("ai-loading").classList.remove("open");
+  showNotify("Missões geradas!");
+  render();
+  showPage("missions");
+
+  document.getElementById("obj-input-title").value = "";
+  document.getElementById("obj-input-situacao").value = "";
+  document.getElementById("obj-input-prazo").value = "";
+}
+
 
 // ── SAVE MANUAL MISSION ────────────────────────────────
 function saveMission() {

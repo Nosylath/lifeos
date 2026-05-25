@@ -647,7 +647,118 @@ function selColor(el) {
 }
 
 // ── SAVE OBJECTIVE → AI ────────────────────────────────
-async function saveObjective() {
+function generateStrategicMissions(obj) {
+  const title = obj.title.toLowerCase();
+  const situacao = obj.situacao.toLowerCase();
+  const pilar = obj.pilar;
+  const dl = daysLeft(obj.prazo);
+
+  let phase = 'base';
+
+  if (pilar === 'fisico') {
+    if (
+      situacao.includes('sedent') ||
+      situacao.includes('33%') ||
+      situacao.includes('gordura') ||
+      title.includes('95kg') ||
+      title.includes('15%')
+    ) {
+      phase = 'adaptacao_fisica';
+    }
+  }
+
+  if (pilar === 'financeiro') {
+    if (
+      title.includes('milhao') ||
+      title.includes('milhão') ||
+      title.includes('renda') ||
+      title.includes('dinheiro')
+    ) {
+      phase = 'crescimento_financeiro';
+    }
+  }
+
+  if (pilar === 'intelecto') {
+    if (
+      title.includes('inglês') ||
+      title.includes('ingles') ||
+      title.includes('idioma') ||
+      title.includes('program')
+    ) {
+      phase = 'aprendizado';
+    }
+  }
+
+  if (pilar === 'autoridade') {
+    if (
+      title.includes('conteúdo') ||
+      title.includes('conteudo') ||
+      title.includes('autoridade') ||
+      title.includes('digital')
+    ) {
+      phase = 'presenca_digital';
+    }
+  }
+
+  const missionBank = {
+    adaptacao_fisica: [
+      { texto: 'Caminhar 15 minutos em ritmo leve, sem buscar performance', xp: 30 },
+      { texto: 'Registrar tudo que comer hoje, sem tentar corrigir ainda', xp: 25 },
+      { texto: 'Beber pelo menos 2 litros de água ao longo do dia', xp: 20 },
+      { texto: 'Dormir 30 minutos mais cedo que o normal', xp: 25 },
+      { texto: 'Medir peso ou cintura e registrar no progresso físico', xp: 20 }
+    ],
+
+    crescimento_financeiro: [
+      { texto: 'Anotar renda atual, gastos fixos e quanto sobra no mês', xp: 35 },
+      { texto: 'Identificar uma habilidade que pode gerar renda online', xp: 30 },
+      { texto: 'Estudar 30 minutos sobre vendas, oferta ou renda digital', xp: 30 },
+      { texto: 'Cortar ou revisar um gasto desnecessário hoje', xp: 25 },
+      { texto: 'Registrar uma ideia de produto, serviço ou conteúdo monetizável', xp: 35 }
+    ],
+
+    aprendizado: [
+      { texto: 'Estudar 25 minutos com foco total no tema escolhido', xp: 30 },
+      { texto: 'Criar 5 cards de revisão sobre o que estudou', xp: 25 },
+      { texto: 'Praticar escuta ou leitura por 20 minutos', xp: 25 },
+      { texto: 'Escrever um pequeno resumo do que aprendeu hoje', xp: 30 },
+      { texto: 'Revisar o conteúdo estudado ontem', xp: 20 }
+    ],
+
+    presenca_digital: [
+      { texto: 'Anotar 3 ideias de conteúdo ligadas à sua evolução', xp: 25 },
+      { texto: 'Escrever um rascunho curto de post ou vídeo', xp: 35 },
+      { texto: 'Estudar 20 minutos uma referência do seu nicho', xp: 25 },
+      { texto: 'Registrar uma lição real aprendida hoje', xp: 30 },
+      { texto: 'Publicar ou preparar um conteúdo simples', xp: 50 }
+    ],
+
+    base: [
+      { texto: `Dedicar 20 minutos ao objetivo: ${obj.title}`, xp: 25 },
+      { texto: 'Registrar o progresso de hoje', xp: 20 },
+      { texto: 'Definir a próxima pequena ação para amanhã', xp: 20 }
+    ]
+  };
+
+  let missions = missionBank[phase] || missionBank.base;
+
+  if (dl !== null && dl < 30) {
+    missions = missions.map(m => ({
+      texto: m.texto + ' — prioridade alta por prazo curto',
+      xp: Math.min(m.xp + 20, 100)
+    }));
+  }
+
+  if (dl !== null && dl > 180) {
+    missions = missions.map(m => ({
+      texto: m.texto + ' — foco em consistência',
+      xp: m.xp
+    }));
+  }
+
+  return missions.slice(0, 3);
+}
+  async function saveObjective() {
   const title = document.getElementById('obj-input-title').value.trim();
   const situacao = document.getElementById('obj-input-situacao').value.trim();
   const prazo = document.getElementById('obj-input-prazo').value;
@@ -664,61 +775,32 @@ async function saveObjective() {
   const dl = daysLeft(prazo);
   const prazoCtx = prazo ? `Prazo: ${dl} dias (até ${new Date(prazo+'T12:00').toLocaleDateString('pt-BR')}).` : 'Sem prazo definido.';
 
-  document.getElementById('ai-loading').classList.add('open');
+    const missions = generateStrategicMissions(obj);
+const today = new Date().toDateString();
 
-  try {
-    const prompt = `Você é um coach de alta performance e sistema de gamificação RPG pessoal.
+missions.forEach((m, i) => {
+  state.missions.push({
+    id: 'm_' + Date.now() + '_' + i,
+    text: m.texto,
+    xp: m.xp,
+    pilar,
+    objectiveId: id,
+    objective: title,
+    done: false,
+    date: today
+  });
+});
 
-Objetivo do usuário: "${title}"
-Situação atual: "${situacao || 'não informada'}"
-Pilar: ${pilar}
-${prazoCtx}
+save();
+document.getElementById('ai-loading').classList.remove('open');
+showNotify('Missões estratégicas geradas!');
+render();
+showPage('missions');
 
-Crie 3 missões diárias realistas e específicas para este objetivo.
-${prazo && dl < 30 ? 'Como o prazo é curto, as missões devem ser mais intensas e focadas.' : ''}
-${prazo && dl > 180 ? 'Como o prazo é longo, as missões devem construir hábitos sustentáveis.' : ''}
-
-Responda APENAS em JSON válido, sem texto antes ou depois:
-[
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 50},
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 40},
-  {"texto": "descrição da missão em português, específica e acionável", "xp": 30}
-]
-
-Regras:
-- Missões realizáveis em 1 dia
-- XP entre 20 e 100 baseado na dificuldade
-- Específicas para a situação atual descrita
-- Em português brasileiro
-- Progressivas (a primeira mais fácil)`;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:500,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content.map(i=>i.text||'').join('');
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const missions = JSON.parse(clean);
-    const today = new Date().toDateString();
-    missions.forEach((m,i) => {
-      state.missions.push({
-        id: 'm_'+Date.now()+'_'+i,
-        text: m.texto,
-        xp: m.xp,
-        pilar,
-        objectiveId: id,
-        objective: title,
-        done: false,
-        date: today
-      });
-    });
-  } catch(e) {
+// Reset form
+document.getElementById('obj-input-title').value='';
+document.getElementById('obj-input-situacao').value='';
+document.getElementById('obj-input-prazo').value='';
     // fallback missions
     const today = new Date().toDateString();
     [{texto:`Dedicar 30 minutos ao objetivo: ${title}`,xp:50},{texto:'Pesquisar e anotar 3 aprendizados sobre o tema',xp:30},{texto:'Registrar sua situação atual com detalhes',xp:20}].forEach((m,i)=>{

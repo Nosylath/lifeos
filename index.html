@@ -649,7 +649,7 @@ function selColor(el) {
 // ── GEMINI + MOTOR DE MISSÕES ─────────────────────────
 // Sem fallback automático: se a IA falhar, o app avisa e não cria missões fake.
 // Cole sua chave Gemini abaixo para testar. Em produção, proteja a chave com backend/serverless.
-const GEMINI_API_KEY = "AIzaSyDHD17qHckzAZq869WhKggHK3NwLdz3bJQ";
+const GEMINI_API_KEY = "AIzaSyB6Zx-eurrdA_mU8d5cqx68Bn8Hgt5CN2s";
 
 function clampXP(value) {
   const n = Number(value) || 30;
@@ -684,7 +684,7 @@ async function askGemini(prompt) {
     throw new Error("Chave Gemini não configurada.");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const response = await fetch(url, {
     method: "POST",

@@ -1,333 +1,279 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Life OS — MVP Limpo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life OS — Sony Carvalho</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#08080e;
-  --surface:#111119;
-  --surface2:#1a1a26;
-  --surface3:#242435;
-  --border:rgba(255,255,255,.10);
-  --text:#f2f2f7;
-  --muted:#85859a;
-  --accent:#7c6aff;
-  --gold:#ffd166;
-  --green:#3dffaa;
-  --red:#ff6a6a;
-  --orange:#ff8a3d;
-  --blue:#6ab4ff;
+:root {
+  --bg:#08080e;--surface:#111119;--surface2:#1a1a26;--surface3:#22222f;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#eeeef5;--muted:#6a6a82;--hint:#3a3a52;
+  --accent:#7c6aff;--accent2:#ff6a3d;--green:#3dffaa;--gold:#ffd166;
+  --coral:#ff6a6a;--blue:#6ab4ff;--pink:#ff6ab4;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  min-height:100vh;
-  background:radial-gradient(circle at top right, rgba(124,106,255,.18), transparent 35%), var(--bg);
-  color:var(--text);
-  font-family:Arial, sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* AMBIENT */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;}
+.orb1{width:500px;height:500px;background:rgba(124,106,255,0.07);top:-150px;right:-100px;}
+.orb2{width:350px;height:350px;background:rgba(255,106,61,0.05);bottom:-80px;left:-80px;}
+.orb3{width:250px;height:250px;background:rgba(61,255,170,0.04);top:50%;left:40%;}
+
+/* NAV */
 nav{
-  height:58px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  background:rgba(8,8,14,.88);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--border);
-  position:sticky;
-  top:0;
-  z-index:10;
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,8,14,0.85);backdrop-filter:blur(20px);
+  border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;height:56px;
 }
-.logo{
-  font-weight:800;
-  letter-spacing:.12em;
-  color:var(--accent);
-  font-size:14px;
+.nav-logo{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:0.15em;color:var(--accent);}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{
+  background:transparent;border:none;color:var(--muted);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  padding:6px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;
 }
-.tabs{display:flex;gap:6px}
-.tab{
-  border:0;
-  background:transparent;
-  color:var(--muted);
-  padding:8px 10px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:700;
+.nav-tab.active{background:var(--surface2);color:var(--text);}
+.nav-tab:hover:not(.active){color:var(--text);}
+.streak-pill{
+  display:flex;align-items:center;gap:5px;
+  background:var(--surface2);border:0.5px solid var(--border2);
+  border-radius:99px;padding:4px 12px;font-size:12px;font-weight:500;color:var(--accent2);
 }
-.tab.active{background:var(--surface2);color:var(--text)}
-.streak{
-  color:var(--orange);
-  font-size:13px;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:99px;
-  padding:6px 10px;
+
+/* LAYOUT */
+.page{display:none;position:relative;z-index:1;max-width:720px;margin:0 auto;padding:28px 20px 80px;}
+.page.active{display:block;animation:fadeUp 0.35s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* DASHBOARD */
+.dash-hero{margin-bottom:28px;}
+.dash-greeting{font-size:13px;color:var(--muted);margin-bottom:6px;}
+.dash-name{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:4px;}
+.dash-tagline{font-size:14px;color:var(--muted);}
+
+/* LEVEL BAR */
+.level-card{
+  background:var(--surface);border:0.5px solid var(--border2);
+  border-radius:16px;padding:20px;margin-bottom:16px;
 }
-main{
-  max-width:780px;
-  margin:0 auto;
-  padding:26px 16px 80px;
+.level-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.level-label{font-size:12px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+.level-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold);}
+.level-name{font-size:13px;color:var(--accent);font-weight:500;}
+.xp-bar-bg{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.xp-bar-fill{height:100%;background:var(--gold);border-radius:3px;transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);}
+.xp-sub{font-size:12px;color:var(--muted);}
+
+/* PILLAR GRID */
+.section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.pillar-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.pillar-card{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:14px;padding:16px;cursor:pointer;transition:all 0.2s;
+  position:relative;overflow:hidden;
 }
-.page{display:none}
-.page.active{display:block}
-.hero{margin-bottom:20px}
-.greeting{color:var(--muted);font-size:14px;margin-bottom:6px}
-h1{font-size:30px;margin-bottom:4px}
-.subtitle{color:var(--muted);font-size:14px}
-.card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:18px;
-  margin-bottom:16px;
+.pillar-card::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.2s;
+  background:radial-gradient(circle at 80% 20%, var(--pc,#7c6aff22), transparent 60%);
 }
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.label{
-  color:var(--muted);
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  margin-bottom:6px;
+.pillar-card:hover{border-color:var(--border2);}
+.pillar-card:hover::before{opacity:1;}
+.pc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.pc-icon{font-size:20px;}
+.pc-lv{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--muted);}
+.pc-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;}
+.pc-bar-bg{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+.pc-bar-fill{height:100%;border-radius:2px;transition:width 0.6s ease;}
+.pc-xp{font-size:11px;color:var(--muted);}
+
+/* OBJECTIVES LIST */
+.obj-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.obj-card{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
 }
-.big{font-size:24px;font-weight:900;color:var(--gold)}
-.level-name{color:var(--accent);font-weight:800}
-.bar-bg{
-  width:100%;
-  height:8px;
-  border-radius:99px;
-  background:var(--surface3);
-  overflow:hidden;
-  margin:12px 0 8px;
+.obj-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.obj-info{flex:1;min-width:0;}
+.obj-title{font-size:14px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.obj-meta{font-size:12px;color:var(--muted);}
+.obj-days{font-size:12px;font-weight:500;color:var(--accent2);white-space:nowrap;}
+
+/* MISSIONS PAGE */
+.missions-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.missions-date{font-size:13px;color:var(--muted);}
+.btn-add{
+  background:var(--accent);color:#fff;border:none;border-radius:10px;
+  padding:8px 16px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all 0.2s;
 }
-.bar-fill{
-  height:100%;
-  background:var(--gold);
-  width:0%;
-  transition:.3s;
+.btn-add:hover{background:#9580ff;}
+
+.mission-group{margin-bottom:20px;}
+.mg-label{
+  font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px;
 }
-.small{font-size:12px;color:var(--muted)}
-.section-title{
-  color:var(--muted);
-  font-weight:900;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  font-size:13px;
-  margin:20px 0 10px;
+.mg-dot{width:6px;height:6px;border-radius:50%;}
+
+.mission-item{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:10px;padding:12px 14px;margin-bottom:6px;
+  display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all 0.2s;
 }
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+.mission-item:hover{border-color:var(--border2);}
+.mission-item.done{opacity:0.45;}
+.mission-item.done .mi-text{text-decoration:line-through;}
+.mi-check{
+  width:20px;height:20px;border-radius:5px;border:1.5px solid var(--hint);
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;font-size:11px;font-weight:700;
 }
-.pillar{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
+.mission-item.done .mi-check{background:var(--green);border-color:var(--green);color:#000;}
+.mi-body{flex:1;min-width:0;}
+.mi-text{font-size:14px;line-height:1.4;margin-bottom:3px;}
+.mi-meta{font-size:11px;color:var(--muted);}
+.mi-xp{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;}
+
+/* DAY XP */
+.day-xp-bar{
+  background:var(--surface);border:0.5px solid var(--border2);
+  border-radius:12px;padding:16px;margin-bottom:20px;
+  display:flex;align-items:center;gap:14px;
 }
-.pillar-top{display:flex;justify-content:space-between;margin-bottom:10px}
-.pillar-name{font-size:13px;font-weight:900;margin-bottom:8px}
-.pillar-xp{color:var(--muted);font-size:12px}
-.btn{
-  border:0;
-  background:var(--accent);
-  color:white;
-  border-radius:12px;
-  padding:10px 14px;
-  cursor:pointer;
-  font-weight:900;
+.dxb-label{font-size:12px;color:var(--muted);white-space:nowrap;}
+.dxb-fill-bg{flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;}
+.dxb-fill{height:100%;background:var(--gold);border-radius:4px;transition:width 0.5s ease;}
+.dxb-val{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--gold);white-space:nowrap;}
+
+/* OBJECTIVES PAGE */
+.obj-full-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.obj-full-card{
+  background:var(--surface);border:0.5px solid var(--border);
+  border-radius:14px;padding:18px;
 }
-.btn.secondary{
-  background:var(--surface2);
-  border:1px solid var(--border);
-  color:var(--text);
-}
-.btn.danger{background:var(--red)}
-.btn.small-btn{padding:6px 10px;font-size:12px}
-.list{display:flex;flex-direction:column;gap:10px}
-.objective,.mission{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
-}
-.objective-title,.mission-title{font-weight:800;margin-bottom:5px}
-.meta{font-size:12px;color:var(--muted);line-height:1.4}
-.mission{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  cursor:pointer;
-}
-.check{
-  width:22px;
-  height:22px;
-  border-radius:7px;
-  border:2px solid var(--muted);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-shrink:0;
-  font-size:13px;
-  font-weight:900;
-}
-.mission.done{opacity:.52}
-.mission.done .mission-title{text-decoration:line-through}
-.mission.done .check{background:var(--green);border-color:var(--green);color:#000}
-.mission-body{flex:1}
-.xp{color:var(--gold);font-weight:900;font-size:13px}
-.empty{
-  padding:34px 16px;
-  text-align:center;
-  color:var(--muted);
-  border:1px dashed var(--border);
-  border-radius:16px;
-}
+.ofc-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.ofc-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.ofc-title{font-size:15px;font-weight:500;flex:1;}
+.ofc-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px;}
+.ofc-prog-label{display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--muted);}
+.ofc-bar-bg{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-bottom:10px;}
+.ofc-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease;}
+.ofc-meta{display:flex;gap:16px;flex-wrap:wrap;}
+.ofc-tag{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+
+/* MODAL */
 .modal-bg{
-  display:none;
-  position:fixed;
-  inset:0;
-  z-index:20;
-  background:rgba(0,0,0,.72);
-  align-items:center;
-  justify-content:center;
-  padding:16px;
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px;
 }
-.modal-bg.open{display:flex}
+.modal-bg.open{display:flex;}
 .modal{
-  width:100%;
-  max-width:500px;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:20px;
+  background:var(--surface);border:0.5px solid var(--border2);
+  border-radius:18px;padding:24px;width:100%;max-width:480px;
+  animation:fadeUp 0.3s ease;
 }
-.modal h2{margin-bottom:14px}
-.field{margin-bottom:12px}
-.field label{
-  display:block;
-  color:var(--muted);
-  font-size:12px;
-  margin-bottom:6px;
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:20px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:0.04em;}
+.field input,.field textarea,.field select{
+  width:100%;background:var(--surface2);border:0.5px solid var(--border2);
+  border-radius:10px;padding:11px 14px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;
 }
-input,textarea,select{
-  width:100%;
-  background:var(--surface2);
-  color:var(--text);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:11px;
-  outline:none;
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:70px;}
+.field select option{background:var(--surface2);}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;}
+.color-swatch{
+  width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.15s;
 }
-textarea{min-height:80px;resize:vertical}
-.modal-actions{display:flex;gap:8px;margin-top:16px}
-.modal-actions .btn{flex:1}
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:20px;
-  transform:translateX(-50%) translateY(80px);
-  background:var(--green);
-  color:#000;
-  padding:10px 18px;
-  border-radius:99px;
-  font-weight:900;
-  transition:.25s;
-  z-index:30;
+.color-swatch.sel{border-color:#fff;transform:scale(1.15);}
+.modal-btns{display:flex;gap:8px;margin-top:20px;}
+.btn-modal-ok{
+  flex:1;background:var(--accent);color:#fff;border:none;border-radius:10px;
+  padding:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;
 }
-.toast.show{transform:translateX(-50%) translateY(0)}
-@media(max-width:520px){
-  .grid{grid-template-columns:1fr}
-  h1{font-size:26px}
-  nav{padding:0 10px}
-  .tab{padding:7px 8px;font-size:12px}
+.btn-modal-ok:hover{background:#9580ff;}
+.btn-modal-cancel{
+  background:transparent;color:var(--muted);border:0.5px solid var(--border2);
+  border-radius:10px;padding:12px 20px;font-family:'Syne',sans-serif;font-size:14px;cursor:pointer;transition:all 0.2s;
+}
+.btn-modal-cancel:hover{color:var(--text);}
+
+/* AI LOADING OVERLAY */
+.ai-loading{
+  display:none;position:fixed;inset:0;background:rgba(8,8,14,0.92);
+  backdrop-filter:blur(8px);z-index:300;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;
+}
+.ai-loading.open{display:flex;}
+.ai-spinner{
+  width:48px;height:48px;border-radius:50%;
+  border:2px solid var(--surface3);border-top-color:var(--accent);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ai-msg{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--accent);}
+.ai-sub{font-size:13px;color:var(--muted);}
+
+/* NOTIFY */
+.notify{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--green);color:#000;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:13px;padding:10px 22px;border-radius:99px;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);z-index:400;white-space:nowrap;
+}
+.notify.show{transform:translateX(-50%) translateY(0);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:14px;}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+
+@media(max-width:480px){
+  .pillar-grid{grid-template-columns:1fr 1fr;}
+  nav{padding:0 14px;}
 }
 </style>
 </head>
 <body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="notify" id="notify"></div>
 
-  <button onclick="testGemini()">Testar Gemini</button>
-<nav>
-  <div class="logo">LIFE OS</div>
-  <div class="tabs">
-    <button class="tab active" onclick="showPage('dash')">Painel</button>
-    <button class="tab" onclick="showPage('missions')">Missões</button>
-    <button class="tab" onclick="showPage('objectives')">Objetivos</button>
-  </div>
-  <div class="streak">🔥 <span id="streak">0</span>d</div>
-</nav>
+<!-- AI LOADING -->
+<div class="ai-loading" id="ai-loading">
+  <div class="ai-spinner"></div>
+  <div class="ai-msg">IA gerando seu plano...</div>
+  <div class="ai-sub">Isso leva alguns segundos</div>
+</div>
 
-<main>
-  <section class="page active" id="page-dash">
-    <div class="hero">
-      <div class="greeting" id="greeting">Bom dia,</div>
-      <h1>Sony Carvalho</h1>
-      <div class="subtitle" id="subtitle">Nível 1 · Iniciante</div>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <div>
-          <div class="label">XP total</div>
-          <div class="big" id="total-xp">0 XP</div>
-        </div>
-        <div style="text-align:right">
-          <div class="label">Nível</div>
-          <div class="level-name" id="level-name">Nível 1 · Iniciante</div>
-        </div>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" id="global-bar"></div></div>
-      <div class="small" id="next-level">0 / 1000 XP para o próximo nível</div>
-    </div>
-
-    <div class="section-title">Pilares</div>
-    <div class="grid" id="pillar-grid"></div>
-
-    <div class="section-title">Objetivos ativos</div>
-    <div class="list" id="dash-objectives"></div>
-  </section>
-
-  <section class="page" id="page-missions">
-    <div class="row" style="margin-bottom:16px">
-      <div>
-        <h1 style="font-size:24px">Missões</h1>
-        <div class="small" id="today-label"></div>
-      </div>
-      <button class="btn" onclick="openModal('mission-modal')">+ Manual</button>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <span class="label" style="margin:0">XP de hoje</span>
-        <span class="big" style="font-size:18px" id="today-xp">0 XP</span>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" id="today-bar"></div></div>
-    </div>
-
-    <div class="list" id="mission-list"></div>
-  </section>
-
-  <section class="page" id="page-objectives">
-    <div class="row" style="margin-bottom:16px">
-      <h1 style="font-size:24px">Objetivos</h1>
-      <button class="btn" onclick="openModal('objective-modal')">+ Novo</button>
-    </div>
-    <div class="list" id="objective-list"></div>
-  </section>
-</main>
-
-<div class="modal-bg" id="objective-modal">
+<!-- MODAL OBJETIVO -->
+<div class="modal-bg" id="modal-obj">
   <div class="modal">
-    <h2>Novo objetivo</h2>
+    <div class="modal-title" id="modal-obj-title">Novo objetivo</div>
     <div class="field">
-      <label>O que você quer conquistar?</label>
-      <input id="obj-title" placeholder="Ex: Atingir 95kg e 15% de gordura" />
+      <label>Objetivo</label>
+      <input type="text" id="obj-input-title" placeholder="Ex: Atingir 95kg e 15% de gordura">
+    </div>
+    <div class="field">
+      <label>Situação atual</label>
+      <textarea id="obj-input-situacao" placeholder="Descreva onde você está hoje. Seja honesto — isso define a qualidade do plano."></textarea>
+    </div>
+    <div class="field">
+      <label>Prazo</label>
+      <input type="date" id="obj-input-prazo">
     </div>
     <div class="field">
       <label>Pilar</label>
-      <select id="obj-pillar">
+      <select id="obj-input-pilar">
         <option value="fisico">Físico</option>
         <option value="financeiro">Financeiro</option>
         <option value="intelecto">Intelecto</option>
@@ -335,34 +281,34 @@ textarea{min-height:80px;resize:vertical}
       </select>
     </div>
     <div class="field">
-      <label>Situação atual</label>
-      <textarea id="obj-current" placeholder="Ex: 90kg, 33% gordura, sedentário"></textarea>
+      <label>Cor</label>
+      <div class="color-row" id="color-row">
+        <div class="color-swatch sel" style="background:#7c6aff" data-color="#7c6aff" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ff6a3d" data-color="#ff6a3d" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#3dffaa" data-color="#3dffaa" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ffd166" data-color="#ffd166" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#6ab4ff" data-color="#6ab4ff" onclick="selColor(this)"></div>
+        <div class="color-swatch" style="background:#ff6ab4" data-color="#ff6ab4" onclick="selColor(this)"></div>
+      </div>
     </div>
-    <div class="field">
-      <label>Meta mensurável</label>
-      <input id="obj-target" placeholder="Ex: 95kg, 15% gordura" />
-    </div>
-    <div class="field">
-      <label>Prazo</label>
-      <input id="obj-deadline" type="date" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn secondary" onclick="closeModal('objective-modal')">Cancelar</button>
-      <button class="btn" onclick="saveObjective()">Criar objetivo</button>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-obj')">Cancelar</button>
+      <button class="btn-modal-ok" onclick="saveObjective()">Gerar plano com IA →</button>
     </div>
   </div>
 </div>
 
-<div class="modal-bg" id="mission-modal">
+<!-- MODAL MISSÃO MANUAL -->
+<div class="modal-bg" id="modal-mission">
   <div class="modal">
-    <h2>Missão manual</h2>
+    <div class="modal-title">Missão manual</div>
     <div class="field">
       <label>Missão</label>
-      <input id="mission-title" placeholder="Ex: Caminhar 20 minutos" />
+      <input type="text" id="mm-title" placeholder="Descreva a missão">
     </div>
     <div class="field">
       <label>Pilar</label>
-      <select id="mission-pillar">
+      <select id="mm-pilar">
         <option value="fisico">Físico</option>
         <option value="financeiro">Financeiro</option>
         <option value="intelecto">Intelecto</option>
@@ -371,444 +317,459 @@ textarea{min-height:80px;resize:vertical}
     </div>
     <div class="field">
       <label>XP</label>
-      <input id="mission-xp" type="number" min="10" max="100" value="30" />
+      <input type="number" id="mm-xp" value="30" min="10" max="200">
     </div>
-    <div class="modal-actions">
-      <button class="btn secondary" onclick="closeModal('mission-modal')">Cancelar</button>
-      <button class="btn" onclick="saveMission()">Adicionar</button>
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-mission')">Cancelar</button>
+      <button class="btn-modal-ok" onclick="saveMission()">Adicionar</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">LIFE OS</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dash')">Painel</button>
+    <button class="nav-tab" onclick="showPage('missions')">Missões</button>
+    <button class="nav-tab" onclick="showPage('objectives')">Objetivos</button>
+  </div>
+  <div class="streak-pill">🔥 <span id="streak-val">0</span>d</div>
+</nav>
+
+<!-- PAINEL -->
+<div class="page active" id="page-dash">
+  <div class="dash-hero">
+    <div class="dash-greeting" id="dash-greeting">Bom dia</div>
+    <div class="dash-name">Sony Carvalho</div>
+    <div class="dash-tagline" id="dash-tagline">Nível 1 · Iniciante</div>
+  </div>
+
+  <div class="level-card">
+    <div class="level-row">
+      <div>
+        <div class="level-label">XP total</div>
+        <div class="level-val" id="total-xp-display">0 XP</div>
+      </div>
+      <div style="text-align:right">
+        <div class="level-label">Nível</div>
+        <div class="level-name" id="level-name-display">Iniciante</div>
+      </div>
+    </div>
+    <div class="xp-bar-bg"><div class="xp-bar-fill" id="global-xp-bar" style="width:0%"></div></div>
+    <div class="xp-sub" id="xp-next-label">0 / 1000 XP para o próximo nível</div>
+  </div>
+
+  <div class="section-title">Pilares</div>
+  <div class="pillar-grid" id="pillar-grid"></div>
+
+  <div class="section-title">Objetivos ativos</div>
+  <div class="obj-list" id="dash-obj-list"></div>
+</div>
+
+<!-- MISSÕES -->
+<div class="page" id="page-missions">
+  <div class="missions-header">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Missões</div>
+      <div class="missions-date" id="missions-date"></div>
+    </div>
+    <button class="btn-add" onclick="openModal('modal-mission')">+ Manual</button>
+  </div>
+
+  <div class="day-xp-bar">
+    <div class="dxb-label">Hoje</div>
+    <div class="dxb-fill-bg"><div class="dxb-fill" id="day-xp-fill" style="width:0%"></div></div>
+    <div class="dxb-val" id="day-xp-val">0 XP</div>
+  </div>
+
+  <div id="missions-container">
+    <div class="empty"><div class="empty-icon">⚔️</div>Adicione um objetivo para gerar missões.</div>
+  </div>
+</div>
+
+<!-- OBJETIVOS -->
+<div class="page" id="page-objectives">
+  <div class="missions-header">
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Objetivos</div>
+    <button class="btn-add" onclick="openModal('modal-obj')">+ Novo</button>
+  </div>
+  <div class="obj-full-list" id="obj-full-list">
+    <div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda. Adicione o primeiro!</div>
+  </div>
+</div>
 
 <script>
-  const GEMINI_API_KEY = "AIzaSyDHD17qHckzAZq869WhKggHK3NwLdz3bJQ";
-
-async function askGemini(prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [{ text: prompt }]
-        }
-      ]
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Erro Gemini:", data);
-    throw new Error("Erro ao chamar Gemini");
-  }
-
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
-
-async function testGemini() {
-  const resposta = await askGemini("Responda apenas: Gemini conectado ao Life OS.");
-  alert(resposta);
-}
-  
-  const STORAGE_KEY = 'lifeos_clean_v1';
-
-const PILLARS = {
-  fisico: { name:'FÍSICO', icon:'🏋️', color:'var(--orange)' },
-  financeiro: { name:'FINANCEIRO', icon:'💰', color:'var(--green)' },
-  intelecto: { name:'INTELECTO', icon:'🧠', color:'var(--blue)' },
-  autoridade: { name:'AUTORIDADE', icon:'⚡', color:'var(--gold)' }
-};
-
-const LEVELS = [
-  { min:0, max:999, name:'Iniciante' },
-  { min:1000, max:2999, name:'Desperto' },
-  { min:3000, max:5999, name:'Determinado' },
-  { min:6000, max:9999, name:'Focado' },
-  { min:10000, max:14999, name:'Consistente' },
-  { min:15000, max:24999, name:'Avançado' },
-  { min:25000, max:49999, name:'Elite' },
-  { min:50000, max:Infinity, name:'Lendário' }
-];
-
-let state = loadState() || {
+// ── STATE ──────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('lifeos_v2') || 'null') || {
   totalXP: 0,
   streak: 0,
   lastActiveDay: null,
   objectives: [],
-  missions: []
+  missions: [],
+  selectedColor: '#7c6aff'
 };
 
-function loadState(){
-  try{
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : null;
-  }catch(e){
-    localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
+const PILLAR_META = {
+  fisico:     { name:'FÍSICO',      icon:'🏋️', color:'#ff6a3d' },
+  financeiro: { name:'FINANCEIRO',  icon:'💰', color:'#3dffaa' },
+  intelecto:  { name:'INTELECTO',   icon:'🧠', color:'#6ab4ff' },
+  autoridade: { name:'AUTORIDADE',  icon:'⚡', color:'#ffd166' }
+};
 
-function save(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+const LEVELS = [
+  {min:0,    max:999,   name:'Iniciante'},
+  {min:1000, max:2999,  name:'Desperto'},
+  {min:3000, max:5999,  name:'Determinado'},
+  {min:6000, max:9999,  name:'Focado'},
+  {min:10000,max:14999, name:'Consistente'},
+  {min:15000,max:24999, name:'Avançado'},
+  {min:25000,max:49999, name:'Elite'},
+  {min:50000,max:Infinity,name:'Lendário'}
+];
 
-function escapeHtml(value){
-  return String(value ?? '')
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'","&#039;");
-}
+function save() { localStorage.setItem('lifeos_v2', JSON.stringify(state)); }
 
-function todayKey(){
-  return new Date().toISOString().slice(0,10);
-}
-
-function todayLabel(){
-  return new Date().toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'});
-}
-
-function getGreeting(){
-  const h = new Date().getHours();
-  if(h < 12) return 'Bom dia,';
-  if(h < 18) return 'Boa tarde,';
-  return 'Boa noite,';
-}
-
-function getLevel(xp){
-  for(let i = LEVELS.length - 1; i >= 0; i--){
-    const level = LEVELS[i];
-    if(xp >= level.min){
-      const range = level.max === Infinity ? 1 : level.max - level.min + 1;
-      const pct = level.max === Infinity ? 100 : Math.round(((xp - level.min) / range) * 100);
-      return { ...level, index:i+1, pct:Math.min(100, Math.max(0, pct)) };
+// ── STREAK ─────────────────────────────────────────────
+function checkStreak() {
+  const today = new Date().toDateString();
+  if (state.lastActiveDay !== today) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate()-1);
+    if (state.lastActiveDay === yesterday.toDateString()) {
+      state.streak++;
+    } else if (state.lastActiveDay !== today) {
+      state.streak = state.streak > 0 && state.lastActiveDay ? 0 : state.streak;
     }
   }
-  return { ...LEVELS[0], index:1, pct:0 };
 }
 
-function daysLeft(date){
-  if(!date) return null;
-  const diff = new Date(date + 'T12:00') - new Date();
-  return Math.max(0, Math.ceil(diff / 86400000));
-}
-
-function showPage(id){
+// ── NAV ────────────────────────────────────────────────
+function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-
-  const index = {dash:0, missions:1, objectives:2}[id];
-  document.querySelectorAll('.tab')[index].classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const idx = {dash:0,missions:1,objectives:2}[id];
+  tabs[idx].classList.add('active');
   render();
 }
 
-function openModal(id){
-  document.getElementById(id).classList.add('open');
+// ── GREETING ───────────────────────────────────────────
+function greeting() {
+  const h = new Date().getHours();
+  return h<12 ? 'Bom dia,' : h<18 ? 'Boa tarde,' : 'Boa noite,';
 }
 
-function closeModal(id){
-  document.getElementById(id).classList.remove('open');
-}
-
-function notify(msg){
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 1800);
-}
-
-function getPillarXP(pillar){
-  return state.missions
-    .filter(m => m.pillar === pillar && m.done)
-    .reduce((sum, m) => sum + m.xp, 0);
-}
-
-function todayMissions(){
-  const key = todayKey();
-  return state.missions.filter(m => m.date === key);
-}
-
-function generateStarterMissions(obj){
-  const base = {
-    fisico: [
-      ['Registrar peso, cintura e energia de hoje', 25],
-      ['Caminhar 15 minutos em ritmo leve', 30],
-      ['Registrar alimentação do dia', 25]
-    ],
-    financeiro: [
-      ['Anotar renda líquida atual', 30],
-      ['Listar gastos fixos e dívidas', 40],
-      ['Calcular quanto sobra ou falta no mês', 35]
-    ],
-    intelecto: [
-      ['Estudar 25 minutos com foco total', 30],
-      ['Criar 5 anotações ou cards de revisão', 25],
-      ['Escrever um resumo curto do que aprendeu', 30]
-    ],
-    autoridade: [
-      ['Anotar 3 ideias de conteúdo', 25],
-      ['Escrever um rascunho curto de post', 35],
-      ['Registrar uma lição aprendida hoje', 30]
-    ]
-  };
-
-  return (base[obj.pillar] || base.intelecto).map((item, i) => ({
-    id:'m_' + Date.now() + '_' + i,
-    title:item[0],
-    xp:item[1],
-    pillar:obj.pillar,
-    objectiveId:obj.id,
-    objectiveTitle:obj.title,
-    done:false,
-    date:todayKey()
-  }));
-}
-
-function saveObjective(){
-  const title = document.getElementById('obj-title').value.trim();
-  const pillar = document.getElementById('obj-pillar').value;
-  const current = document.getElementById('obj-current').value.trim();
-  const target = document.getElementById('obj-target').value.trim();
-  const deadline = document.getElementById('obj-deadline').value;
-
-  if(!title){
-    notify('Digite um objetivo.');
-    return;
+// ── LEVEL ──────────────────────────────────────────────
+function getLevel(xp) {
+  for (let i=LEVELS.length-1;i>=0;i--) {
+    if (xp >= LEVELS[i].min) return {...LEVELS[i], index:i+1, pct: Math.min(100, Math.round((xp-LEVELS[i].min)/(LEVELS[i].max-LEVELS[i].min+1)*100))};
   }
-
-  const obj = {
-    id:'o_' + Date.now(),
-    title,
-    pillar,
-    current,
-    target,
-    deadline,
-    done:false,
-    createdAt:new Date().toISOString()
-  };
-
-  state.objectives.push(obj);
-  state.missions.push(...generateStarterMissions(obj));
-  save();
-
-  document.getElementById('obj-title').value = '';
-  document.getElementById('obj-current').value = '';
-  document.getElementById('obj-target').value = '';
-  document.getElementById('obj-deadline').value = '';
-
-  closeModal('objective-modal');
-  notify('Objetivo criado.');
-  showPage('missions');
+  return {...LEVELS[0], index:1, pct:0};
 }
 
-function saveMission(){
-  const title = document.getElementById('mission-title').value.trim();
-  const pillar = document.getElementById('mission-pillar').value;
-  const xp = Math.min(100, Math.max(10, parseInt(document.getElementById('mission-xp').value, 10) || 30));
-
-  if(!title){
-    notify('Digite uma missão.');
-    return;
-  }
-
-  state.missions.push({
-    id:'m_' + Date.now(),
-    title,
-    xp,
-    pillar,
-    objectiveId:null,
-    objectiveTitle:'Manual',
-    done:false,
-    date:todayKey()
-  });
-
-  save();
-
-  document.getElementById('mission-title').value = '';
-  document.getElementById('mission-xp').value = '30';
-
-  closeModal('mission-modal');
-  notify('Missão adicionada.');
-  render();
+// ── PILLAR XP ──────────────────────────────────────────
+function getPillarXP(pilar) {
+  return state.missions.filter(m => m.pilar===pilar && m.done).reduce((s,m)=>s+m.xp,0);
 }
 
-function toggleMission(id){
-  const mission = state.missions.find(m => m.id === id);
-  if(!mission) return;
-
-  mission.done = !mission.done;
-  state.totalXP = Math.max(0, state.totalXP + (mission.done ? mission.xp : -mission.xp));
-
-  if(mission.done){
-    const today = todayKey();
-    if(state.lastActiveDay !== today){
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yKey = yesterday.toISOString().slice(0,10);
-
-      if(state.lastActiveDay === yKey) state.streak += 1;
-      else if(!state.lastActiveDay) state.streak = 1;
-      else state.streak = 1;
-
-      state.lastActiveDay = today;
-    }
-    notify('+' + mission.xp + ' XP');
-  }
-
-  save();
-  render();
+// ── DAYS LEFT ──────────────────────────────────────────
+function daysLeft(prazo) {
+  if (!prazo) return null;
+  const diff = new Date(prazo) - new Date();
+  return Math.max(0, Math.ceil(diff/86400000));
 }
 
-function deleteObjective(id){
-  state.objectives = state.objectives.filter(o => o.id !== id);
-  state.missions = state.missions.filter(m => m.objectiveId !== id);
-  save();
-  render();
-  notify('Objetivo removido.');
+// ── TODAY MISSIONS ─────────────────────────────────────
+function todayMissions() {
+  const today = new Date().toDateString();
+  return state.missions.filter(m => m.date === today);
 }
 
-function deleteMission(id){
-  const mission = state.missions.find(m => m.id === id);
-  if(mission && mission.done){
-    state.totalXP = Math.max(0, state.totalXP - mission.xp);
-  }
-  state.missions = state.missions.filter(m => m.id !== id);
-  save();
-  render();
-}
+// ── RENDER DASHBOARD ───────────────────────────────────
+function renderDash() {
+  document.getElementById('dash-greeting').textContent = greeting();
+  const lv = getLevel(state.totalXP);
+  document.getElementById('total-xp-display').textContent = state.totalXP.toLocaleString() + ' XP';
+  document.getElementById('level-name-display').textContent = 'Nível ' + lv.index + ' · ' + lv.name;
+  document.getElementById('dash-tagline').textContent = 'Nível ' + lv.index + ' · ' + lv.name;
+  document.getElementById('global-xp-bar').style.width = lv.pct + '%';
+  document.getElementById('xp-next-label').textContent = state.totalXP.toLocaleString() + ' / ' + (lv.max+1).toLocaleString() + ' XP para o próximo nível';
+  document.getElementById('streak-val').textContent = state.streak;
 
-function renderDash(){
-  document.getElementById('greeting').textContent = getGreeting();
-  document.getElementById('streak').textContent = state.streak;
-
-  const level = getLevel(state.totalXP);
-  document.getElementById('subtitle').textContent = 'Nível ' + level.index + ' · ' + level.name;
-  document.getElementById('total-xp').textContent = state.totalXP.toLocaleString('pt-BR') + ' XP';
-  document.getElementById('level-name').textContent = 'Nível ' + level.index + ' · ' + level.name;
-  document.getElementById('global-bar').style.width = level.pct + '%';
-  document.getElementById('next-level').textContent =
-    level.max === Infinity
-      ? state.totalXP.toLocaleString('pt-BR') + ' XP · nível máximo'
-      : state.totalXP.toLocaleString('pt-BR') + ' / ' + (level.max + 1).toLocaleString('pt-BR') + ' XP para o próximo nível';
-
-  const pillarGrid = document.getElementById('pillar-grid');
-  pillarGrid.innerHTML = Object.entries(PILLARS).map(([key, p]) => {
+  // Pillars
+  const pillarsWithData = Object.entries(PILLAR_META).map(([key, meta]) => {
     const xp = getPillarXP(key);
     const lv = getLevel(xp);
-    return `
-      <div class="pillar">
-        <div class="pillar-top">
-          <span>${p.icon}</span>
-          <span class="small">Lv ${lv.index}</span>
+    return {key, ...meta, xp, lv};
+  });
+  document.getElementById('pillar-grid').innerHTML = pillarsWithData.map(p => `
+    <div class="pillar-card" style="--pc:${p.color}22" onclick="showPage('missions')">
+      <div class="pc-top">
+        <span class="pc-icon">${p.icon}</span>
+        <span class="pc-lv">Lv ${p.lv.index}</span>
+      </div>
+      <div class="pc-name" style="color:${p.color}">${p.name}</div>
+      <div class="pc-bar-bg"><div class="pc-bar-fill" style="width:${p.lv.pct}%;background:${p.color}"></div></div>
+      <div class="pc-xp">${p.xp.toLocaleString()} XP</div>
+    </div>
+  `).join('');
+
+  // Active objectives
+  const objs = state.objectives.filter(o=>!o.done);
+  const el = document.getElementById('dash-obj-list');
+  if (!objs.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda.</div>';
+  } else {
+    el.innerHTML = objs.slice(0,3).map(o => {
+      const dl = daysLeft(o.prazo);
+      return `<div class="obj-card">
+        <div class="obj-dot" style="background:${o.color}"></div>
+        <div class="obj-info">
+          <div class="obj-title">${o.title}</div>
+          <div class="obj-meta">${PILLAR_META[o.pilar]?.name||o.pilar}</div>
         </div>
-        <div class="pillar-name" style="color:${p.color}">${p.name}</div>
-        <div class="bar-bg"><div class="bar-fill" style="width:${lv.pct}%;background:${p.color}"></div></div>
-        <div class="pillar-xp">${xp.toLocaleString('pt-BR')} XP</div>
-      </div>
-    `;
-  }).join('');
-
-  const active = state.objectives.filter(o => !o.done).slice(0,3);
-  const list = document.getElementById('dash-objectives');
-  if(!active.length){
-    list.innerHTML = '<div class="empty">Nenhum objetivo ativo ainda.</div>';
-    return;
+        ${dl!==null ? `<div class="obj-days">${dl}d restantes</div>` : ''}
+      </div>`;
+    }).join('');
   }
-
-  list.innerHTML = active.map(o => {
-    const pillar = PILLARS[o.pillar];
-    const dl = daysLeft(o.deadline);
-    return `
-      <div class="objective">
-        <div class="objective-title">${escapeHtml(o.title)}</div>
-        <div class="meta">${pillar.icon} ${pillar.name}${dl !== null ? ' · ' + dl + ' dias restantes' : ''}</div>
-      </div>
-    `;
-  }).join('');
 }
 
-function renderMissions(){
-  document.getElementById('today-label').textContent = todayLabel();
+// ── RENDER MISSIONS ────────────────────────────────────
+function renderMissions() {
+  const today = new Date();
+  document.getElementById('missions-date').textContent = today.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
 
-  const missions = todayMissions();
-  const doneXP = missions.filter(m => m.done).reduce((s,m) => s + m.xp, 0);
-  const totalXP = missions.reduce((s,m) => s + m.xp, 0);
-  const pct = totalXP ? Math.round(doneXP / totalXP * 100) : 0;
+  const ms = todayMissions();
+  const doneXP = ms.filter(m=>m.done).reduce((s,m)=>s+m.xp,0);
+  const totalAvail = ms.reduce((s,m)=>s+m.xp,0);
+  const pct = totalAvail>0 ? Math.round(doneXP/totalAvail*100) : 0;
+  document.getElementById('day-xp-val').textContent = doneXP + ' XP';
+  document.getElementById('day-xp-fill').style.width = pct+'%';
 
-  document.getElementById('today-xp').textContent = doneXP + ' XP';
-  document.getElementById('today-bar').style.width = pct + '%';
-
-  const list = document.getElementById('mission-list');
-  if(!missions.length){
-    list.innerHTML = '<div class="empty">Nenhuma missão para hoje. Crie um objetivo ou adicione manualmente.</div>';
+  const container = document.getElementById('missions-container');
+  if (!ms.length) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">⚔️</div>Nenhuma missão para hoje. Adicione um objetivo!</div>';
     return;
   }
 
-  list.innerHTML = missions.map(m => {
-    const pillar = PILLARS[m.pillar] || PILLARS.intelecto;
-    return `
-      <div class="mission ${m.done ? 'done' : ''}" onclick="toggleMission('${m.id}')">
-        <div class="check">${m.done ? '✓' : ''}</div>
-        <div class="mission-body">
-          <div class="mission-title">${escapeHtml(m.title)}</div>
-          <div class="meta">${pillar.icon} ${pillar.name} · ${escapeHtml(m.objectiveTitle || 'Manual')}</div>
-        </div>
-        <div class="xp">+${m.xp}</div>
-        <button class="btn secondary small-btn" onclick="event.stopPropagation();deleteMission('${m.id}')">×</button>
+  // Group by pilar
+  const grouped = {};
+  ms.forEach(m => {
+    if (!grouped[m.pilar]) grouped[m.pilar] = [];
+    grouped[m.pilar].push(m);
+  });
+
+  container.innerHTML = Object.entries(grouped).map(([pilar, missions]) => {
+    const meta = PILLAR_META[pilar] || {name:pilar, color:'#7c6aff', icon:'⚡'};
+    return `<div class="mission-group">
+      <div class="mg-label">
+        <div class="mg-dot" style="background:${meta.color}"></div>
+        ${meta.icon} ${meta.name}
       </div>
-    `;
-  }).join('');
-}
-
-function renderObjectives(){
-  const list = document.getElementById('objective-list');
-  if(!state.objectives.length){
-    list.innerHTML = '<div class="empty">Nenhum objetivo ainda. Crie o primeiro.</div>';
-    return;
-  }
-
-  list.innerHTML = state.objectives.map(o => {
-    const pillar = PILLARS[o.pillar] || PILLARS.intelecto;
-    const missions = state.missions.filter(m => m.objectiveId === o.id);
-    const done = missions.filter(m => m.done).length;
-    const pct = missions.length ? Math.round(done / missions.length * 100) : 0;
-    const dl = daysLeft(o.deadline);
-
-    return `
-      <div class="objective">
-        <div class="row">
-          <div>
-            <div class="objective-title">${escapeHtml(o.title)}</div>
-            <div class="meta">${pillar.icon} ${pillar.name}${dl !== null ? ' · ' + dl + ' dias restantes' : ''}</div>
+      ${missions.map(m => `
+        <div class="mission-item ${m.done?'done':''}" onclick="toggleMission('${m.id}')">
+          <div class="mi-check">${m.done?'✓':''}</div>
+          <div class="mi-body">
+            <div class="mi-text">${m.text}</div>
+            <div class="mi-meta">${m.objective||''}</div>
           </div>
-          <button class="btn danger small-btn" onclick="deleteObjective('${o.id}')">Remover</button>
+          <div class="mi-xp">+${m.xp} XP</div>
         </div>
-        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${pillar.color}"></div></div>
-        <div class="meta">
-          Progresso: ${done}/${missions.length} missões concluídas
-          ${o.current ? '<br>Atual: ' + escapeHtml(o.current) : ''}
-          ${o.target ? '<br>Meta: ' + escapeHtml(o.target) : ''}
-        </div>
-      </div>
-    `;
+      `).join('')}
+    </div>`;
   }).join('');
 }
 
-function render(){
+// ── RENDER OBJECTIVES ──────────────────────────────────
+function renderObjectives() {
+  const el = document.getElementById('obj-full-list');
+  if (!state.objectives.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎯</div>Nenhum objetivo ainda. Adicione o primeiro!</div>';
+    return;
+  }
+  el.innerHTML = state.objectives.map(o => {
+    const dl = daysLeft(o.prazo);
+    const todayMs = state.missions.filter(m=>m.objectiveId===o.id);
+    const done = todayMs.filter(m=>m.done).length;
+    const total = todayMs.length;
+    const pct = total>0 ? Math.round(done/total*100) : 0;
+    return `<div class="obj-full-card">
+      <div class="ofc-top">
+        <div class="ofc-dot" style="background:${o.color}"></div>
+        <div class="ofc-title">${o.title}</div>
+        <button class="ofc-edit" onclick="deleteObj('${o.id}')" title="Remover">×</button>
+      </div>
+      <div class="ofc-prog-label">
+        <span>Missões do dia: ${done}/${total}</span>
+        <span>${pct}%</span>
+      </div>
+      <div class="ofc-bar-bg"><div class="ofc-bar-fill" style="width:${pct}%;background:${o.color}"></div></div>
+      <div class="ofc-meta">
+        <span class="ofc-tag">📂 ${PILLAR_META[o.pilar]?.name||o.pilar}</span>
+        ${dl!==null?`<span class="ofc-tag">⏳ ${dl} dias restantes</span>`:''}
+        <span class="ofc-tag">📅 ${o.prazo ? new Date(o.prazo+'T12:00').toLocaleDateString('pt-BR') : 'sem prazo'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TOGGLE MISSION ─────────────────────────────────────
+function toggleMission(id) {
+  const m = state.missions.find(m=>m.id===id);
+  if (!m) return;
+  m.done = !m.done;
+  const delta = m.done ? m.xp : -m.xp;
+  state.totalXP = Math.max(0, state.totalXP + delta);
+  if (m.done) {
+    state.lastActiveDay = new Date().toDateString();
+    showNotify('+' + m.xp + ' XP!');
+  }
+  save();
+  render();
+}
+
+// ── DELETE OBJ ─────────────────────────────────────────
+function deleteObj(id) {
+  state.objectives = state.objectives.filter(o=>o.id!==id);
+  state.missions = state.missions.filter(m=>m.objectiveId!==id);
+  save(); render();
+}
+
+// ── MODAL ──────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function selColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('sel'));
+  el.classList.add('sel');
+  state.selectedColor = el.dataset.color;
+}
+
+// ── SAVE OBJECTIVE → AI ────────────────────────────────
+async function saveObjective() {
+  const title = document.getElementById('obj-input-title').value.trim();
+  const situacao = document.getElementById('obj-input-situacao').value.trim();
+  const prazo = document.getElementById('obj-input-prazo').value;
+  const pilar = document.getElementById('obj-input-pilar').value;
+  if (!title) return;
+
+  const id = 'obj_' + Date.now();
+  const obj = { id, title, situacao, prazo, pilar, color: state.selectedColor, done:false };
+  state.objectives.push(obj);
+  save();
+  closeModal('modal-obj');
+
+  // Calculate days for context
+  const dl = daysLeft(prazo);
+  const prazoCtx = prazo ? `Prazo: ${dl} dias (até ${new Date(prazo+'T12:00').toLocaleDateString('pt-BR')}).` : 'Sem prazo definido.';
+
+  document.getElementById('ai-loading').classList.add('open');
+
+  try {
+    const prompt = `Você é um coach de alta performance e sistema de gamificação RPG pessoal.
+
+Objetivo do usuário: "${title}"
+Situação atual: "${situacao || 'não informada'}"
+Pilar: ${pilar}
+${prazoCtx}
+
+Crie 3 missões diárias realistas e específicas para este objetivo.
+${prazo && dl < 30 ? 'Como o prazo é curto, as missões devem ser mais intensas e focadas.' : ''}
+${prazo && dl > 180 ? 'Como o prazo é longo, as missões devem construir hábitos sustentáveis.' : ''}
+
+Responda APENAS em JSON válido, sem texto antes ou depois:
+[
+  {"texto": "descrição da missão em português, específica e acionável", "xp": 50},
+  {"texto": "descrição da missão em português, específica e acionável", "xp": 40},
+  {"texto": "descrição da missão em português, específica e acionável", "xp": 30}
+]
+
+Regras:
+- Missões realizáveis em 1 dia
+- XP entre 20 e 100 baseado na dificuldade
+- Específicas para a situação atual descrita
+- Em português brasileiro
+- Progressivas (a primeira mais fácil)`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.map(i=>i.text||'').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const missions = JSON.parse(clean);
+    const today = new Date().toDateString();
+    missions.forEach((m,i) => {
+      state.missions.push({
+        id: 'm_'+Date.now()+'_'+i,
+        text: m.texto,
+        xp: m.xp,
+        pilar,
+        objectiveId: id,
+        objective: title,
+        done: false,
+        date: today
+      });
+    });
+  } catch(e) {
+    // fallback missions
+    const today = new Date().toDateString();
+    [{texto:`Dedicar 30 minutos ao objetivo: ${title}`,xp:50},{texto:'Pesquisar e anotar 3 aprendizados sobre o tema',xp:30},{texto:'Registrar sua situação atual com detalhes',xp:20}].forEach((m,i)=>{
+      state.missions.push({id:'m_'+Date.now()+'_'+i,text:m.texto,xp:m.xp,pilar,objectiveId:id,objective:title,done:false,date:today});
+    });
+  }
+
+  save();
+  document.getElementById('ai-loading').classList.remove('open');
+  showNotify('Missões geradas!');
+  render();
+  showPage('missions');
+
+  // Reset form
+  document.getElementById('obj-input-title').value='';
+  document.getElementById('obj-input-situacao').value='';
+  document.getElementById('obj-input-prazo').value='';
+}
+
+// ── SAVE MANUAL MISSION ────────────────────────────────
+function saveMission() {
+  const text = document.getElementById('mm-title').value.trim();
+  const pilar = document.getElementById('mm-pilar').value;
+  const xp = parseInt(document.getElementById('mm-xp').value)||30;
+  if (!text) return;
+  state.missions.push({
+    id:'m_'+Date.now(),text,xp,pilar,objectiveId:null,objective:'Manual',done:false,date:new Date().toDateString()
+  });
+  save(); closeModal('modal-mission');
+  showNotify('Missão adicionada!');
+  render();
+  document.getElementById('mm-title').value='';
+}
+
+// ── NOTIFY ─────────────────────────────────────────────
+function showNotify(msg) {
+  const el = document.getElementById('notify');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// ── RENDER ─────────────────────────────────────────────
+function render() {
   renderDash();
   renderMissions();
   renderObjectives();
 }
 
+// ── INIT ───────────────────────────────────────────────
+checkStreak();
 render();
 </script>
 </body>

@@ -647,9 +647,8 @@ function selColor(el) {
 }
 
 // ── GEMINI + MOTOR DE MISSÕES ─────────────────────────
-// IMPORTANTE:
-// Para testar, cole sua chave aqui.
-// Para publicar de verdade, o ideal é proteger essa chave com backend/serverless.
+// Sem fallback automático: se a IA falhar, o app avisa e não cria missões fake.
+// Cole sua chave Gemini abaixo para testar. Em produção, proteja a chave com backend/serverless.
 const GEMINI_API_KEY = "AIzaSyDHD17qHckzAZq869WhKggHK3NwLdz3bJQ";
 
 function clampXP(value) {
@@ -696,9 +695,7 @@ async function askGemini(prompt) {
       contents: [
         {
           parts: [
-            {
-              text: prompt
-            }
+            { text: prompt }
           ]
         }
       ],
@@ -717,49 +714,6 @@ async function askGemini(prompt) {
   }
 
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
-
-function fallbackMissions(title, situacao, pilar) {
-  const lowerTitle = (title || "").toLowerCase();
-  const lowerSituacao = (situacao || "").toLowerCase();
-
-  if (pilar === "fisico") {
-    return [
-      { texto: "Registrar peso atual, medida da cintura e nível de energia de hoje", xp: 25 },
-      { texto: "Caminhar 15 minutos em ritmo leve, sem buscar performance", xp: 30 },
-      { texto: "Registrar tudo que comer hoje, sem tentar corrigir ainda", xp: 25 }
-    ];
-  }
-
-  if (pilar === "financeiro") {
-    return [
-      { texto: "Anotar renda líquida mensal, gastos fixos e quanto sobra no mês", xp: 35 },
-      { texto: "Listar todas as dívidas: valor, parcelas, juros e situação atual", xp: 45 },
-      { texto: "Identificar uma habilidade ou serviço que pode gerar renda extra", xp: 35 }
-    ];
-  }
-
-  if (pilar === "intelecto") {
-    return [
-      { texto: "Estudar 25 minutos com foco total no objetivo escolhido", xp: 30 },
-      { texto: "Criar 5 anotações ou cards sobre o que estudou hoje", xp: 25 },
-      { texto: "Fazer uma revisão curta do conteúdo aprendido ontem", xp: 20 }
-    ];
-  }
-
-  if (pilar === "autoridade") {
-    return [
-      { texto: "Anotar 3 ideias de conteúdo ligadas à sua evolução real", xp: 25 },
-      { texto: "Escrever um rascunho curto de post, vídeo ou thread", xp: 35 },
-      { texto: "Estudar 20 minutos uma referência do nicho que você admira", xp: 25 }
-    ];
-  }
-
-  return [
-    { texto: `Dedicar 20 minutos ao objetivo: ${title}`, xp: 25 },
-    { texto: "Registrar o progresso de hoje", xp: 20 },
-    { texto: "Definir a próxima pequena ação para amanhã", xp: 20 }
-  ];
 }
 
 async function generateMissions(title, situacao, prazo, pilar) {
@@ -814,22 +768,17 @@ Regras de XP:
 - quanto mais difícil, mais XP
 `;
 
-  try {
-    const raw = await askGemini(prompt);
-    const parsed = cleanGeminiJson(raw);
+  const raw = await askGemini(prompt);
+  const parsed = cleanGeminiJson(raw);
 
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      throw new Error("Resposta da IA veio vazia ou inválida.");
-    }
-
-    return parsed.slice(0, 3).map(m => ({
-      texto: String(m.texto || m.text || "Missão sem descrição").trim(),
-      xp: clampXP(m.xp)
-    }));
-  } catch (error) {
-    console.warn("Gemini falhou. Usando fallback local:", error);
-    return fallbackMissions(title, situacao, pilar);
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("Resposta da IA veio vazia ou inválida.");
   }
+
+  return parsed.slice(0, 3).map(m => ({
+    texto: String(m.texto || m.text || "").trim(),
+    xp: clampXP(m.xp)
+  })).filter(m => m.texto);
 }
 
 function validateObjectiveInput(title) {
@@ -855,49 +804,61 @@ async function saveObjective() {
 
   if (!validateObjectiveInput(title)) return;
 
-  const id = "obj_" + Date.now();
-  const obj = {
-    id,
-    title,
-    situacao,
-    prazo,
-    pilar,
-    color: state.selectedColor,
-    done: false
-  };
-
-  state.objectives.push(obj);
-  save();
-  closeModal("modal-obj");
-
   document.getElementById("ai-loading").classList.add("open");
 
-  const missions = await generateMissions(title, situacao, prazo, pilar);
-  const today = new Date().toDateString();
+  try {
+    const missions = await generateMissions(title, situacao, prazo, pilar);
 
-  missions.forEach((m, i) => {
-    state.missions.push({
-      id: "m_" + Date.now() + "_" + i,
-      text: m.texto,
-      xp: clampXP(m.xp),
+    if (!Array.isArray(missions) || missions.length === 0) {
+      throw new Error("A IA não retornou missões válidas.");
+    }
+
+    const id = "obj_" + Date.now();
+    const obj = {
+      id,
+      title,
+      situacao,
+      prazo,
       pilar,
-      objectiveId: id,
-      objective: title,
-      done: false,
-      date: today
+      color: state.selectedColor,
+      done: false
+    };
+
+    state.objectives.push(obj);
+
+    const today = new Date().toDateString();
+
+    missions.forEach((m, i) => {
+      state.missions.push({
+        id: "m_" + Date.now() + "_" + i,
+        text: m.texto,
+        xp: clampXP(m.xp),
+        pilar,
+        objectiveId: id,
+        objective: title,
+        done: false,
+        date: today
+      });
     });
-  });
 
-  save();
+    save();
 
-  document.getElementById("ai-loading").classList.remove("open");
-  showNotify("Missões geradas!");
-  render();
-  showPage("missions");
+    document.getElementById("ai-loading").classList.remove("open");
+    showNotify("Missões geradas pela IA!");
+    render();
+    showPage("missions");
 
-  document.getElementById("obj-input-title").value = "";
-  document.getElementById("obj-input-situacao").value = "";
-  document.getElementById("obj-input-prazo").value = "";
+    document.getElementById("obj-input-title").value = "";
+    document.getElementById("obj-input-situacao").value = "";
+    document.getElementById("obj-input-prazo").value = "";
+
+  } catch (error) {
+    console.error("Erro ao gerar missões com IA:", error);
+
+    document.getElementById("ai-loading").classList.remove("open");
+    showNotify("A IA não conseguiu gerar missões.");
+    return;
+  }
 }
 
 

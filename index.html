@@ -273,7 +273,7 @@ nav{
     </div>
     <div class="field">
       <label>Pilar</label>
-      <select id="obj-input-pilar">
+      <select id="obj-input-pilar" onchange="updateSituationPlaceholder()">
         <option value="fisico">Físico</option>
         <option value="financeiro">Financeiro</option>
         <option value="intelecto">Intelecto</option>
@@ -293,7 +293,7 @@ nav{
     </div>
     <div class="modal-btns">
       <button class="btn-modal-cancel" onclick="closeModal('modal-obj')">Cancelar</button>
-      <button class="btn-modal-ok" onclick="saveObjective()">Gerar plano com IA →</button>
+      <button class="btn-modal-ok" onclick="saveObjective()">Gerar plano estratégico →</button>
     </div>
   </div>
 </div>
@@ -646,7 +646,7 @@ function selColor(el) {
   state.selectedColor = el.dataset.color;
 }
 
-// ── SAVE OBJECTIVE → AI ────────────────────────────────
+// ── MOTOR DE ESTRATÉGIA ────────────────────────────────
 function generateStrategicMissions(obj) {
   const title = obj.title.toLowerCase();
   const situacao = obj.situacao.toLowerCase();
@@ -655,82 +655,34 @@ function generateStrategicMissions(obj) {
 
   let phase = 'base';
 
-  if (pilar === 'fisico') {
-    if (
-      situacao.includes('sedent') ||
-      situacao.includes('33%') ||
-      situacao.includes('gordura') ||
-      title.includes('95kg') ||
-      title.includes('15%')
-    ) {
-      phase = 'adaptacao_fisica';
-    }
-  }
-
-  if (pilar === 'financeiro') {
-    if (
-      title.includes('milhao') ||
-      title.includes('milhão') ||
-      title.includes('renda') ||
-      title.includes('dinheiro')
-    ) {
-      phase = 'crescimento_financeiro';
-    }
-  }
-
-  if (pilar === 'intelecto') {
-    if (
-      title.includes('inglês') ||
-      title.includes('ingles') ||
-      title.includes('idioma') ||
-      title.includes('program')
-    ) {
-      phase = 'aprendizado';
-    }
-  }
-
-  if (pilar === 'autoridade') {
-    if (
-      title.includes('conteúdo') ||
-      title.includes('conteudo') ||
-      title.includes('autoridade') ||
-      title.includes('digital')
-    ) {
-      phase = 'presenca_digital';
-    }
-  }
+  if (pilar === 'fisico') phase = 'adaptacao_fisica';
+  if (pilar === 'financeiro') phase = 'diagnostico_financeiro';
+  if (pilar === 'intelecto') phase = 'aprendizado';
+  if (pilar === 'autoridade') phase = 'presenca_digital';
 
   const missionBank = {
     adaptacao_fisica: [
+      { texto: 'Registrar peso atual, medida da cintura e nível de energia de hoje', xp: 25 },
       { texto: 'Caminhar 15 minutos em ritmo leve, sem buscar performance', xp: 30 },
-      { texto: 'Registrar tudo que comer hoje, sem tentar corrigir ainda', xp: 25 },
-      { texto: 'Beber pelo menos 2 litros de água ao longo do dia', xp: 20 },
-      { texto: 'Dormir 30 minutos mais cedo que o normal', xp: 25 },
-      { texto: 'Medir peso ou cintura e registrar no progresso físico', xp: 20 }
+      { texto: 'Registrar tudo que comer hoje, sem tentar corrigir ainda', xp: 25 }
     ],
 
-    crescimento_financeiro: [
-      { texto: 'Anotar renda atual, gastos fixos e quanto sobra no mês', xp: 35 },
-      { texto: 'Identificar uma habilidade que pode gerar renda online', xp: 30 },
-      { texto: 'Estudar 30 minutos sobre vendas, oferta ou renda digital', xp: 30 },
-      { texto: 'Cortar ou revisar um gasto desnecessário hoje', xp: 25 },
-      { texto: 'Registrar uma ideia de produto, serviço ou conteúdo monetizável', xp: 35 }
+    diagnostico_financeiro: [
+      { texto: 'Anotar sua renda líquida mensal ou semanal atual', xp: 30 },
+      { texto: 'Listar todas as dívidas: valor, parcelas, juros e se está ativa ou no Serasa', xp: 45 },
+      { texto: 'Calcular quanto sobra ou falta no mês depois dos gastos fixos', xp: 40 }
     ],
 
     aprendizado: [
       { texto: 'Estudar 25 minutos com foco total no tema escolhido', xp: 30 },
       { texto: 'Criar 5 cards de revisão sobre o que estudou', xp: 25 },
-      { texto: 'Praticar escuta ou leitura por 20 minutos', xp: 25 },
-      { texto: 'Escrever um pequeno resumo do que aprendeu hoje', xp: 30 },
-      { texto: 'Revisar o conteúdo estudado ontem', xp: 20 }
+      { texto: 'Escrever um pequeno resumo do que aprendeu hoje', xp: 30 }
     ],
 
     presenca_digital: [
       { texto: 'Anotar 3 ideias de conteúdo ligadas à sua evolução', xp: 25 },
       { texto: 'Escrever um rascunho curto de post ou vídeo', xp: 35 },
-      { texto: 'Estudar 20 minutos uma referência do seu nicho', xp: 25 },
-      { texto: 'Registrar uma lição real aprendida hoje', xp: 30 },
-      { texto: 'Publicar ou preparar um conteúdo simples', xp: 50 }
+      { texto: 'Registrar uma lição real aprendida hoje', xp: 30 }
     ],
 
     base: [
@@ -756,68 +708,70 @@ function generateStrategicMissions(obj) {
     }));
   }
 
-  return missions.slice(0, 3);
+  return missions;
 }
-  async function saveObjective() {
+
+function updateSituationPlaceholder() {
+  const pilar = document.getElementById('obj-input-pilar').value;
+  const campo = document.getElementById('obj-input-situacao');
+
+  const exemplos = {
+    fisico: 'Ex: peso atual, % de gordura, rotina, sono, alimentação, dores, se é sedentário ou treina.',
+    financeiro: 'Ex: trabalha ou está desempregado? CLT, autônomo ou informal? Quanto ganha líquido por mês/semana? Tem dívidas? Quais? Parceladas, ativas ou no Serasa?',
+    intelecto: 'Ex: nível atual, tempo disponível por dia, dificuldade principal, cursos feitos, objetivo de aprendizado.',
+    autoridade: 'Ex: nicho desejado, redes atuais, se já posta conteúdo, referências, habilidades e assuntos que domina.'
+  };
+
+  campo.placeholder = exemplos[pilar] || exemplos.fisico;
+}
+
+async function saveObjective() {
   const title = document.getElementById('obj-input-title').value.trim();
   const situacao = document.getElementById('obj-input-situacao').value.trim();
   const prazo = document.getElementById('obj-input-prazo').value;
   const pilar = document.getElementById('obj-input-pilar').value;
+
   if (!title) return;
 
   const id = 'obj_' + Date.now();
-  const obj = { id, title, situacao, prazo, pilar, color: state.selectedColor, done:false };
+
+  const obj = {
+    id,
+    title,
+    situacao,
+    prazo,
+    pilar,
+    color: state.selectedColor,
+    done: false
+  };
+
   state.objectives.push(obj);
+
+  const missions = generateStrategicMissions(obj);
+  const today = new Date().toDateString();
+
+  missions.forEach((m, i) => {
+    state.missions.push({
+      id: 'm_' + Date.now() + '_' + i,
+      text: m.texto,
+      xp: m.xp,
+      pilar,
+      objectiveId: id,
+      objective: title,
+      done: false,
+      date: today
+    });
+  });
+
   save();
   closeModal('modal-obj');
-
-  // Calculate days for context
-  const dl = daysLeft(prazo);
-  const prazoCtx = prazo ? `Prazo: ${dl} dias (até ${new Date(prazo+'T12:00').toLocaleDateString('pt-BR')}).` : 'Sem prazo definido.';
-
-    const missions = generateStrategicMissions(obj);
-const today = new Date().toDateString();
-
-missions.forEach((m, i) => {
-  state.missions.push({
-    id: 'm_' + Date.now() + '_' + i,
-    text: m.texto,
-    xp: m.xp,
-    pilar,
-    objectiveId: id,
-    objective: title,
-    done: false,
-    date: today
-  });
-});
-
-save();
-document.getElementById('ai-loading').classList.remove('open');
-showNotify('Missões estratégicas geradas!');
-render();
-showPage('missions');
-
-// Reset form
-document.getElementById('obj-input-title').value='';
-document.getElementById('obj-input-situacao').value='';
-document.getElementById('obj-input-prazo').value='';
-    // fallback missions
-    const today = new Date().toDateString();
-    [{texto:`Dedicar 30 minutos ao objetivo: ${title}`,xp:50},{texto:'Pesquisar e anotar 3 aprendizados sobre o tema',xp:30},{texto:'Registrar sua situação atual com detalhes',xp:20}].forEach((m,i)=>{
-      state.missions.push({id:'m_'+Date.now()+'_'+i,text:m.texto,xp:m.xp,pilar,objectiveId:id,objective:title,done:false,date:today});
-    });
-  }
-
-  save();
-  document.getElementById('ai-loading').classList.remove('open');
-  showNotify('Missões geradas!');
+  showNotify('Plano estratégico gerado!');
   render();
   showPage('missions');
 
-  // Reset form
-  document.getElementById('obj-input-title').value='';
-  document.getElementById('obj-input-situacao').value='';
-  document.getElementById('obj-input-prazo').value='';
+  document.getElementById('obj-input-title').value = '';
+  document.getElementById('obj-input-situacao').value = '';
+  document.getElementById('obj-input-prazo').value = '';
 }
 
 // ── SAVE MANUAL MISSION ────────────────────────────────
